@@ -1,4 +1,5 @@
 // Seiten des Productionplaners (Menü UI-1: Start · Aufträge · Kalkulation · System).
+import { AenderungsSeite } from "@lager/ui/aenderungen.jsx";
 import { Startseite } from "./seiten/Start.jsx";
 import { KundenListe, KundeFormular, KundeDetail } from "./seiten/Kunden.jsx";
 import { PersonalSeite, PersonDetail, FahrzeugeSeite } from "./seiten/Ressourcen.jsx";
@@ -40,6 +41,7 @@ export const SEITEN = [
   { muster: "/verwaltung/einstellungen", Komponente: EinstellungenSeite },
   { muster: "/verwaltung/sicherung", Komponente: SicherungSeite },
   { muster: "/verwaltung/sicherheit", Komponente: SicherheitSeite },
+  { muster: "/verwaltung/aenderungen", Komponente: AenderungsSeite },
   { muster: "/verwaltung/system", Komponente: SystemSeite },
   { muster: "/verwaltung/scanner", Komponente: ScannerVerwaltung },
   { muster: "/verwaltung/arbeitsplaetze", Komponente: ArbeitsplatzVerwaltung },

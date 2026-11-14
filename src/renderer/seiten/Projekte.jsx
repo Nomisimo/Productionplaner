@@ -1,4 +1,5 @@
 // Projekte/Jobs (FA-29–FA-31), Aufgaben (FA-32), Dateien (FA-33), Kalender (FA-34).
+import { AenderungsVerlauf } from "@lager/ui/aenderungen.jsx";
 import React, { useMemo, useRef, useState } from "react";
 import { ProjektRessourcen } from "./Ressourcen.jsx";
 import { Seite, Section, Knopf, Tabelle, Eingabe, Auswahl, Feld, Meldung, Textfeld, Modal, Tabs, Badge, Leerzustand, Icon, useDaten, useFormular, useBestaetigung } from "@lager/ui/bausteine.jsx";
@@ -179,6 +180,7 @@ export function ProjektDetail({ params, query }) {
       {angebotDialog && <NeuesAngebot projektId={p.id} onSchliessen={() => setAngebotDialog(false)} />}
       {tab === "zeiten" && <ProjektZeiten p={p} />}
       {tab === "ressourcen" && <ProjektRessourcen projektId={p.id} />}
+      {tab === "uebersicht" && <AenderungsVerlauf tabelle="projekt" id={p.id} />}
       {jobsDialog && <JobsNachGewerk p={p} onFertig={(r) => { setJobsDialog(false); if (r) { setMeldung({ level: "success", text: r.text }); d.laden(); } }} />}
     </Seite>
   );
