@@ -1,4 +1,6 @@
 // Projekte/Jobs (FA-29–FA-31), Aufgaben (FA-32), Dateien (FA-33), Kalender (FA-34).
+import { RegelListe, AllgemeineAufgabe } from "./Wiederkehrend.jsx";
+import { VorlageAktionen } from "./Vorlagen.jsx";
 import { SchadenListe } from "@lager/ui/schaeden.jsx";
 import { AenderungsVerlauf } from "@lager/ui/aenderungen.jsx";
 import React, { useMemo, useRef, useState } from "react";
@@ -56,13 +58,14 @@ export function ProjektListe({ query }) {
 }
 
 /* ── Anlegen / Bearbeiten (FA-30) ── */
-const LEER = { art: "projekt", name: "", kunde_id: "", status: "anfrage", beginn: "", ende: "", ort: "", notizen: "", uebergeordnet_id: "", gewerk: "" };
+const LEER = { art: "projekt", name: "", kunde_id: "", status: "anfrage", beginn: "", ende: "", ort: "", notizen: "", uebergeordnet_id: "", gewerk: "", vorlage_id: "" };
 export function ProjektFormular({ params, query }) {
   const { api, navigiere } = useLager();
   const neu = !params.id;
   const f = useFormular({ ...LEER, uebergeordnet_id: query.projekt || "", art: query.projekt ? "job" : "projekt", kunde_id: query.kunde || "" });
   const kunden = useDaten(() => api.get("/api/v1/kunden?limit=500"), []);
   const eltern = useDaten(() => api.get("/api/v1/projekte?art=projekt&limit=500"), []);
+  const vorlagen = useDaten(() => (neu ? api.get("/api/v1/projektvorlagen").catch(() => ({ zeilen: [] })) : Promise.resolve(null)), [neu]);
   const alt = useDaten(() => (neu ? Promise.resolve(null) : api.get(`/api/v1/projekte/${params.id}`).then((p) => {
     f.setWerte({ ...LEER, ...Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v ?? ""])), kunde_id: String(p.kunde_id), uebergeordnet_id: p.uebergeordnet_id ? String(p.uebergeordnet_id) : "" });
     return p;
@@ -71,7 +74,7 @@ export function ProjektFormular({ params, query }) {
   const istJob = w.art === "job";
   const zuProjekt = istJob && !!w.uebergeordnet_id;
   const speichern = () => f.absenden(async (x) => {
-    const daten = { ...x, kunde_id: x.kunde_id ? Number(x.kunde_id) : null, uebergeordnet_id: istJob && x.uebergeordnet_id ? Number(x.uebergeordnet_id) : null, version: alt.daten?.version };
+    const daten = { ...x, kunde_id: x.kunde_id ? Number(x.kunde_id) : null, uebergeordnet_id: istJob && x.uebergeordnet_id ? Number(x.uebergeordnet_id) : null, version: alt.daten?.version, vorlage_id: neu && x.vorlage_id ? Number(x.vorlage_id) : undefined };
     const r = neu ? await api.post("/api/v1/projekte", daten) : await api.put(`/api/v1/projekte/${params.id}`, daten);
     navigiere(`/projekte/${r.projekt.id}`);
     return r;
@@ -95,6 +98,8 @@ export function ProjektFormular({ params, query }) {
           {!zuProjekt && <Feld label="Kunde" pflicht fehler={f.fehler.kunde_id}><Auswahl leer="– Kunde wählen –" value={w.kunde_id} onChange={f.setze("kunde_id")}
             optionen={(kunden.daten?.zeilen || []).map((k) => ({ wert: String(k.id), titel: k.firma ? `${k.firma} (${k.name})` : k.name }))} /></Feld>}
           <Feld label="Status" fehler={f.fehler.status}><Auswahl value={w.status} onChange={f.setze("status")} optionen={STATUS_OPT} /></Feld>
+          {neu && (vorlagen.daten?.zeilen || []).some((v) => v.aktiv) && <Feld label="Vorlage" hinweis="Legt Standardaufgaben und ein Angebot mit Standardpositionen an"><Auswahl value={w.vorlage_id} leer="– keine –" onChange={f.setze("vorlage_id")}
+            optionen={vorlagen.daten.zeilen.filter((v) => v.aktiv).map((v) => ({ wert: String(v.id), titel: v.veranstaltung ? `${v.name} (${v.veranstaltung})` : v.name }))} /></Feld>}
           <Feld label="Beginn" fehler={f.fehler.beginn}><Eingabe type="date" value={w.beginn} onChange={f.setze("beginn")} /></Feld>
           <Feld label="Ende" fehler={f.fehler.ende}><Eingabe type="date" value={w.ende} onChange={f.setze("ende")} /></Feld>
           <Feld label="Ort"><Eingabe value={w.ort} onChange={f.setze("ort")} /></Feld>
@@ -134,6 +139,7 @@ export function ProjektDetail({ params, query }) {
       aktionen={darf && <>
         <div style={{ width: 190 }}><Auswahl aria-label="Status ändern" value={p.status} onChange={(e) => aktion(() => api.post(`/api/v1/projekte/${p.id}/status`, { status: e.target.value }))} optionen={STATUS_OPT} /></div>
         <Knopf icon="Pencil" onClick={() => navigiere(`/projekte/${p.id}/bearbeiten`)}>Bearbeiten</Knopf>
+        <VorlageAktionen p={p} onFertig={(r) => { setMeldung({ level: r.level || "success", text: r.text }); d.laden(); }} />
         <Knopf icon="Copy" onClick={async () => { const r = await aktion(() => api.post(`/api/v1/projekte/${p.id}/duplizieren`, {})); if (r) navigiere(`/projekte/${r.projekt.id}`); }}>Duplizieren</Knopf>
         <Knopf art="gefahr" icon="Trash2" aria-label="Projekt löschen" onClick={async () => {
           if (!(await fragen({ titel: "Projekt löschen?", text: `${p.nummer} und sein Projektordner werden gelöscht. Projekte mit Jobs, Material oder Verlauf lassen sich nicht löschen.`, knopf: "Löschen" }))) return;
@@ -230,8 +236,8 @@ function AufgabenTabelle({ zeilen, darf, onAktion, mitProjekt }) {
   return (
     <Tabelle zeilen={zeilen} leer="Keine Aufgaben." spalten={[
       { titel: "", breite: 40, wert: (a) => <input type="checkbox" aria-label={`${a.text} erledigt`} checked={a.erledigt} disabled={!darf} onChange={(e) => onAktion(() => api.put(`/api/v1/aufgaben/${a.id}`, { erledigt: e.target.checked }))} /> },
-      { titel: "Aufgabe", wert: (a) => <span style={{ textDecoration: a.erledigt ? "line-through" : undefined }}>{a.text}</span> },
-      ...(mitProjekt ? [{ titel: "Projekt", wert: (a) => <a href={`#/projekte/${a.projekt_id}?tab=aufgaben`}>{a.nummer} {a.projekt}</a> }] : []),
+      { titel: "Aufgabe", wert: (a) => <span style={{ textDecoration: a.erledigt ? "line-through" : undefined }}>{a.text}{a.regel_id && <Icon name="RefreshCw" size={12} aria-label="wiederkehrend" style={{ marginLeft: 6, verticalAlign: -1 }} />}</span> },
+      ...(mitProjekt ? [{ titel: "Projekt", wert: (a) => (a.projekt_id ? <a href={`#/projekte/${a.projekt_id}?tab=aufgaben`}>{a.nummer} {a.projekt}</a> : <span className="lp-meta">allgemein</span>) }] : []),
       { titel: "Fällig", wert: (a) => (a.faellig ? <span style={{ color: !a.erledigt && a.faellig < heute ? "var(--lp-err)" : undefined, fontWeight: !a.erledigt && a.faellig < heute ? 600 : undefined }}>
         {!a.erledigt && a.faellig < heute && <Icon name="AlertTriangle" size={14} aria-label="überfällig" style={{ verticalAlign: -2 }} />} {datumAnzeige(a.faellig)}</span> : "–") },
       { titel: "Zuständig", wert: (a) => a.zugewiesen_name || a.zugewiesen_benutzer || "–" },
@@ -251,18 +257,20 @@ export function AufgabenListe({ query }) {
   const { api, nutzer } = useLager();
   const [filter, setFilter] = useState(query.filter || "meine");
   const [erledigt, setErledigt] = useState(false);
-  const l = useDaten(() => api.get(`/api/v1/aufgaben?filter=${filter}${erledigt ? "&erledigt=1" : ""}`), [filter, erledigt]);
+  const l = useDaten(() => (filter === "regeln" ? Promise.resolve(null) : api.get(`/api/v1/aufgaben?filter=${filter}${erledigt ? "&erledigt=1" : ""}`)), [filter, erledigt]);
   useLive(["aufgabe"], () => l.laden());
   const [meldung, setMeldung] = useState(null);
   const aktion = async (fn) => { setMeldung(null); try { const r = await fn(); l.laden(); return r; } catch (e) { setMeldung({ level: "error", text: fehlerText(e) }); return null; } };
   return (
     <Seite titel="Aufgaben" untertitel="Überfällige zuerst">
-      <Tabs tabs={[{ id: "meine", titel: "Meine" }, { id: "alle", titel: "Alle" }]} aktiv={filter} onWechsel={setFilter} />
-      {meldung && <Meldung {...meldung} />}
-      <Section aktionen={<label className="lp-toggle"><input type="checkbox" checked={erledigt} onChange={(e) => setErledigt(e.target.checked)} />Erledigte zeigen</label>}>
+      <Tabs tabs={[{ id: "meine", titel: "Meine" }, { id: "alle", titel: "Alle" }, { id: "regeln", titel: "Wiederkehrend" }]} aktiv={filter} onWechsel={setFilter} />
+      {meldung && <Meldung {...meldung} onSchliessen={() => setMeldung(null)} />}
+      {filter === "regeln" ? <RegelListe darf={darfP(nutzer)} /> : <Section aktionen={<>
+        {darfP(nutzer) && <AllgemeineAufgabe onFertig={(r) => { setMeldung({ level: "success", text: r.text }); l.laden(); }} />}
+        <label className="lp-toggle"><input type="checkbox" checked={erledigt} onChange={(e) => setErledigt(e.target.checked)} />Erledigte zeigen</label></>}>
         {l.fehler && <Meldung level="error" text={l.fehler} />}
         <AufgabenTabelle zeilen={l.daten?.zeilen} darf={darfP(nutzer)} onAktion={aktion} mitProjekt />
-      </Section>
+      </Section>}
     </Seite>
   );
 }
