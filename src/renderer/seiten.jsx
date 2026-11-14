@@ -1,6 +1,7 @@
 // Seiten des Productionplaners (Menü UI-1: Start · Aufträge · Kalkulation · System).
 import { Startseite } from "./seiten/Start.jsx";
 import { KundenListe, KundeFormular, KundeDetail } from "./seiten/Kunden.jsx";
+import { ProjektListe, ProjektFormular, ProjektDetail, ProjektPerNummer, AufgabenListe, Kalender } from "./seiten/Projekte.jsx";
 import { normalisiereCode, istGeraetecode, normalisiereProjektcode } from "@lager/domain/codes.js";
 
 export const SEITEN = [
@@ -9,6 +10,13 @@ export const SEITEN = [
   { muster: "/kunden/neu", Komponente: KundeFormular },
   { muster: "/kunden/:id/bearbeiten", Komponente: KundeFormular },
   { muster: "/kunden/:id", Komponente: KundeDetail },
+  { muster: "/projekte", Komponente: ProjektListe },
+  { muster: "/projekte/neu", Komponente: ProjektFormular },
+  { muster: "/projekte/nummer/:nummer", Komponente: ProjektPerNummer },
+  { muster: "/projekte/:id/bearbeiten", Komponente: ProjektFormular },
+  { muster: "/projekte/:id", Komponente: ProjektDetail },
+  { muster: "/aufgaben", Komponente: AufgabenListe },
+  { muster: "/kalender", Komponente: Kalender },
 ];
 
 /** Globales Codefeld (FA-16): Projekt → hier, Gerät → Materialplaner. Vollständig in Phase 6. */

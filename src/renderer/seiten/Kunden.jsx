@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Seite, Section, Knopf, Tabelle, Eingabe, Feld, Meldung, Textfeld, Modal, useDaten, useFormular, useBestaetigung } from "@lager/ui/bausteine.jsx";
 import { useLager, useLive } from "@lager/ui/huelle.jsx";
 import { ladeHerunter } from "@lager/ui/download.js";
+import { StatusBadge } from "./Projekte.jsx";
 import { fehlerText } from "@lager/ui/texte.js";
 import { datumAnzeige } from "@lager/domain/zeit.js";
 import { euro } from "@lager/domain/geld.js";
@@ -163,9 +164,9 @@ export function KundeDetail({ params }) {
         </div>
         {k.notizen && <p style={{ whiteSpace: "pre-wrap" }}>{k.notizen}</p>}
       </Section>
-      <Section titel="Projekte" icon="FolderKanban">
+      <Section titel="Projekte" icon="FolderKanban" aktionen={(nutzer.admin || nutzer.rechte.projekte === "w") && <Knopf icon="Plus" onClick={() => navigiere(`/projekte/neu?kunde=${k.id}`)}>Neues Projekt</Knopf>}>
         <Tabelle zeilen={k.projekte} leer="Noch keine Projekte." onZeile={(p) => navigiere(`/projekte/${p.id}`)} spalten={[
-          { titel: "Nummer", feld: "nummer" }, { titel: "Name", feld: "name" }, { titel: "Status", feld: "status" }, { titel: "Beginn", wert: (p) => datumAnzeige(p.beginn) },
+          { titel: "Nummer", feld: "nummer" }, { titel: "Name", feld: "name" }, { titel: "Status", wert: (p) => <StatusBadge s={p.status} /> }, { titel: "Beginn", wert: (p) => datumAnzeige(p.beginn) },
         ]} />
       </Section>
       <Section titel="Angebote" icon="FileText">
