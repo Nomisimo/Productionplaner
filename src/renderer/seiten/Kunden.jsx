@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Seite, Section, Knopf, Tabelle, Eingabe, Feld, Meldung, Textfeld, Modal, useDaten, useFormular, useBestaetigung } from "@lager/ui/bausteine.jsx";
 import { useLager, useLive } from "@lager/ui/huelle.jsx";
+import { ladeHerunter } from "@lager/ui/download.js";
 import { fehlerText } from "@lager/ui/texte.js";
 import { datumAnzeige } from "@lager/domain/zeit.js";
 import { euro } from "@lager/domain/geld.js";
@@ -10,13 +11,6 @@ const TITEL = { name: "Ansprechpartner", firma: "Firma", email: "E-Mail", telefo
 const LEER = { name: "", firma: "", email: "", telefon: "", strasse: "", plz: "", ort: "", ust_id: "", notizen: "" };
 
 /** Datei vom Server laden und speichern (Electron zeigt den Speichern-Dialog). */
-export async function ladeHerunter(api, pfad, dateiname) {
-  const r = await api.anfrage("GET", pfad, undefined, { roh: true });
-  const url = URL.createObjectURL(await r.blob());
-  const a = document.createElement("a");
-  a.href = url; a.download = dateiname; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
 
 export function KundenListe({ query }) {
   const { api, navigiere, nutzer } = useLager();
