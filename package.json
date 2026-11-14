@@ -1,0 +1,27 @@
+{
+  "name": "productionplaner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Productionplaner – Planer-Familie (Planer-Lager)",
+  "author": "Momo",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist-app/main.cjs",
+  "scripts": {
+    "build": "node scripts/build.cjs --minify",
+    "build:dev": "node scripts/build.cjs",
+    "start": "npm run build:dev && electron .",
+    "test": "node --test --test-reporter=dot test/",
+    "dist:mac": "npm run build && electron-builder --mac --arm64 --x64",
+    "dist:win": "npm run build && electron-builder --win"
+  },
+  "dependencies": {
+    "lucide-react": "^1.72.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "electron": "^45.3.2",
+    "esbuild": "^0.28.2"
+  }
+}
