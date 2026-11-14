@@ -1,4 +1,5 @@
 // FA-26 Kundenstamm (Liste, Detail, Bearbeiten, Dublettenwarnung), FA-27 Kontaktformular-PDF + Import, Adresssuche.
+import { KundeKontakte, KundeHistorie } from "./KundeKontakte.jsx";
 import { SchadenListe } from "@lager/ui/schaeden.jsx";
 import { AenderungsVerlauf } from "@lager/ui/aenderungen.jsx";
 import React, { useEffect, useRef, useState } from "react";
@@ -166,6 +167,8 @@ export function KundeDetail({ params }) {
         </div>
         {k.notizen && <p style={{ whiteSpace: "pre-wrap" }}>{k.notizen}</p>}
       </Section>
+      <KundeKontakte k={k} darf={darf} onGeaendert={() => d.laden()} />
+      <KundeHistorie k={k} darf={darf} onGeaendert={() => d.laden()} />
       <Section titel="Projekte" icon="FolderKanban" aktionen={(nutzer.admin || nutzer.rechte.projekte === "w") && <Knopf icon="Plus" onClick={() => navigiere(`/projekte/neu?kunde=${k.id}`)}>Neues Projekt</Knopf>}>
         <Tabelle zeilen={k.projekte} leer="Noch keine Projekte." onZeile={(p) => navigiere(`/projekte/${p.id}`)} spalten={[
           { titel: "Nummer", feld: "nummer" }, { titel: "Name", feld: "name" }, { titel: "Status", wert: (p) => <StatusBadge s={p.status} /> }, { titel: "Beginn", wert: (p) => datumAnzeige(p.beginn) },
