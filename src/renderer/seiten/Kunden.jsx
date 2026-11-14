@@ -174,7 +174,36 @@ export function KundeDetail({ params }) {
           { titel: "Nummer", feld: "nummer" }, { titel: "Projekt", feld: "projekt_nummer" }, { titel: "Status", feld: "status" }, { titel: "Summe", rechts: true, wert: (a) => euro(a.summe) },
         ]} />
       </Section>
+      <KundeDatenschutz k={k} onFertig={(r) => { setMeldung(r); d.laden(); }} />
       {dialog}
     </Seite>
+  );
+}
+
+/** NFA-03 Löschkonzept: Aufbewahrungsfrist, Datenauskunft (Art. 15 DSGVO), Anonymisieren nach Fristablauf (nur Admin). */
+function KundeDatenschutz({ k, onFertig }) {
+  const { api, nutzer } = useLager();
+  const d = useDaten(() => api.get(`/api/v1/kunden/${k.id}/datenschutz`), [k.id, k.version]);
+  const [offen, setOffen] = useState(false);
+  const [text, setText] = useState("");
+  const [fehler, setFehler] = useState(null);
+  const darf = nutzer.admin || nutzer.rechte.kunden === "w";
+  if (!d.daten) return null;
+  return (
+    <Section titel="Datenschutz" icon="ShieldCheck" aktionen={<>
+      {darf && <Knopf icon="Download" onClick={() => ladeHerunter(api, `/api/v1/kunden/${k.id}/auskunft`, `Datenauskunft-Kunde-${k.id}.json`).catch((e) => setFehler(fehlerText(e)))}>Datenauskunft</Knopf>}
+      {nutzer.admin && d.daten.anonymisieren && <Knopf art="gefahr" icon="EyeOff" onClick={() => setOffen(true)}>Kundendaten anonymisieren</Knopf>}</>}>
+      {fehler && <Meldung level="error" text={fehler} onSchliessen={() => setFehler(null)} />}
+      <p style={{ marginTop: 0 }} data-testid="datenschutz">{d.daten.text}</p>
+      {d.daten.sperrt.length > 0 && <ul className="lp-liste">{d.daten.sperrt.slice(0, 5).map((x) => <li key={x.art + x.nummer}>{x.nummer} · {x.text} · bis {datumAnzeige(x.bis)}</li>)}</ul>}
+      {offen && <Modal titel="Kundendaten anonymisieren?" onSchliessen={() => setOffen(false)} fuss={<>
+        <Knopf art="geist" onClick={() => setOffen(false)}>Abbrechen</Knopf>
+        <Knopf art="gefahr" disabled={text !== "ANONYMISIEREN"} onClick={async () => {
+          try { const r = await api.post(`/api/v1/kunden/${k.id}/anonymisieren`, { bestaetigung: text }); setOffen(false); onFertig(r); } catch (e) { setFehler(fehlerText(e)); setOffen(false); }
+        }}>Anonymisieren</Knopf></>}>
+        <p style={{ marginTop: 0 }}>Name, Firma, Adresse, Telefon, E-Mail und Notizen werden endgültig gelöscht. Projekte und Belege bleiben mit der Kundennummer erhalten. Das lässt sich nicht rückgängig machen.</p>
+        <Feld label="Zur Bestätigung ANONYMISIEREN eintippen"><Eingabe aria-label="Bestätigung" value={text} onChange={(e) => setText(e.target.value)} /></Feld>
+      </Modal>}
+    </Section>
   );
 }
