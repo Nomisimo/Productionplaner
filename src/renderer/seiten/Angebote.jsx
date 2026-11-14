@@ -9,7 +9,7 @@ import { datumAnzeige, zeitpunktAnzeige } from "@lager/domain/zeit.js";
 import { euro } from "@lager/domain/geld.js";
 import {
   ANGEBOT_STATUS, ANGEBOT_FARBE, POSITION_ARTEN, angebotBearbeitbar, angebotWechselErlaubt, positionSumme, angebotSumme,
-  mengenschrittFehler, ueberbuchungHinweis, zeitrechner, tagesfaktor,
+  mengenschrittFehler, ueberbuchungHinweis, zeitrechner, tagesfaktor, kalkulatorPosition,
 } from "@lager/domain/angebot.js";
 
 export const AngebotBadge = ({ s }) => <Badge farbe={ANGEBOT_FARBE[s]} text="#fff">{ANGEBOT_STATUS[s] || s}</Badge>;
@@ -247,7 +247,7 @@ export function AngebotDetail({ params }) {
                   </tr>
                   {(schritt || hinweis || (v && v.verfuegbar != null)) && <tr><td /><td colSpan={8} style={{ paddingTop: 0 }}>
                     {schritt && <div style={{ color: "var(--lp-err)" }} role="alert">{schritt}</div>}
-                    {hinweis ? <div style={{ color: "var(--lp-warn, #b26a00)" }} data-testid="ueberbuchung">⚠ {hinweis}</div>
+                    {hinweis ? <div className="lp-warnhinweis" role="status" data-testid="ueberbuchung">{hinweis}</div>
                       : v && v.verfuegbar != null && <span className="lp-meta">Verfügbar im Zeitraum: {mengeText(v.verfuegbar - gleich)} von {v.bestand}</span>}
                   </td></tr>}
                 </React.Fragment>
@@ -264,7 +264,7 @@ export function AngebotDetail({ params }) {
       </Section>
       <Section titel="Schluss">
         <Feld label="Schlusstext"><Textfeld rows={2} value={k.schlusstext} disabled={!offen} onChange={kopfSetze("schlusstext")} /></Feld>
-        {offen && <div className="lp-zeile"><Knopf art="primaer" icon="Save" disabled={!geaendert} onClick={speichern}>Speichern</Knopf>{geaendert && <span className="lp-meta">Ungespeicherte Änderungen</span>}</div>}
+        {offen && <div className="lp-zeile"><Knopf art="primaer" icon="Save" disabled={!geaendert} onClick={speichern}>Speichern</Knopf><span className="lp-meta">{geaendert ? "Ungespeicherte Änderungen" : "Keine offenen Änderungen."}</span></div>}
       </Section>
       {a.fassungen.length > 0 && <Section titel="Fassungen (Archiv)" icon="Archive">
         <Tabelle zeilen={a.fassungen} spalten={[
@@ -308,13 +308,13 @@ export function Packliste({ params }) {
         <Tabelle zeilen={pl.zeilen} schluessel="artikel_id" leer="Keine packbaren Positionen im Angebot." spalten={[
           { titel: "Kategorie", feld: "kategorie" },
           { titel: "Artikel", wert: (z) => <div><strong>{z.artikel}</strong>
-            {z.set && <div className="lp-meta">{z.set.text}{z.set.vorschlag?.length ? ` · Vorschlag: ${z.set.vorschlag.map((t) => t.code).join(", ")}` : " · keine freie volle Tasche"}</div>}
+            {z.set && <div className="lp-meta">{z.set.text}{z.set.vorschlag?.length ? ` · Vorschlag: ${z.set.vorschlag.map((t) => t.code).join(", ")}` : " · Keine freie, volle Tasche im Lager – packe die Teile einzeln."}</div>}
             {z.inhalt && <div className="lp-meta">{z.inhalt.text}</div>}
             {z.verbrauch && <div className="lp-meta">Verbrauch – von Hand kontrollieren</div>}</div> },
           { titel: "Soll", rechts: true, wert: (z) => `${mengeText(z.soll)} ${z.einheit}` },
           { titel: "Ist", rechts: true, wert: (z) => z.ist ?? "–" },
           { titel: "Gepackt", rechts: true, wert: (z) => z.gepackt ?? "–" },
-          { titel: "Fertig", wert: (z) => (z.fertig == null ? "–" : z.fertig ? <Badge farbe="#2e9d47" text="#fff">fertig</Badge> : <Badge farbe="#d08a1e" text="#fff">offen</Badge>) },
+          { titel: "Fertig", wert: (z) => (z.fertig == null ? "–" : z.fertig ? <Badge farbe="#1f6e32" text="#fff">fertig</Badge> : <Badge farbe="#8a4b00" text="#fff">offen</Badge>) },
         ]} />
       </Section>
       {pdf && <PdfAnsicht pfad={`/api/v1/angebote/${a.id}/packliste.pdf`} titel={`Packliste ${a.projekt_nummer}`} onSchliessen={() => setPdf(false)} />}
@@ -334,13 +334,7 @@ export function Kalkulator() {
   const karte = new Map((artikel.daten?.zeilen || []).map((x) => [String(x.id), x]));
   const pos = zeilen.map((z) => {
     const x = karte.get(z.artikel_id);
-    if (!x) return null;
-    if (x.ist_leistung) {
-      const st = z.stunden === "" ? einst.tag_stunden_standard : Number(zahl(z.stunden));
-      return { art: "frei", menge: Number(zahl(z.menge)) || 0, tage: Number(tage) || 1, einzelpreis: zeitrechner(st, { tagessatz: x.preis_tag, erweitert: x.preis_erweitert, zeitmodell: x.zeitmodell }, einst).summe };
-    }
-    if (x.verbrauch) return { art: "verkauf", menge: Number(zahl(z.menge)) || 0, tage: 1, einzelpreis: x.verkaufspreis ?? x.preis_tag };
-    return { art: "miete", menge: Number(zahl(z.menge)) || 0, tage: Number(tage) || 1, einzelpreis: x.preis_tag, folgetag_prozent: x.folgetag_prozent ?? einst.folgetag_prozent };
+    return x ? kalkulatorPosition(x, { menge: zahl(z.menge), tage, stunden: z.stunden === "" ? null : zahl(z.stunden) }, einst) : null;
   });
   const s = angebotSumme(pos.filter(Boolean), { rabatt_prozent: Number(zahl(rabatt)) || 0, kleinunternehmer: einst.kleinunternehmer, ust_satz: einst.ust_satz });
   const setze = (i, w) => setZeilen(zeilen.map((z, j) => (j === i ? { ...z, ...w } : z)));
