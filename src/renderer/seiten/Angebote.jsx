@@ -312,7 +312,7 @@ export function Packliste({ params }) {
             {z.inhalt && <div className="lp-meta">{z.inhalt.text}</div>}
             {z.verbrauch && <div className="lp-meta">Verbrauch – von Hand kontrollieren</div>}</div> },
           { titel: "Soll", rechts: true, wert: (z) => `${mengeText(z.soll)} ${z.einheit}` },
-          { titel: "Ist", rechts: true, wert: (z) => z.ist ?? "–" },
+          { titel: "Im Projekt", rechts: true, wert: (z) => z.ist ?? "–" },
           { titel: "Gepackt", rechts: true, wert: (z) => z.gepackt ?? "–" },
           { titel: "Fertig", wert: (z) => (z.fertig == null ? "–" : z.fertig ? <Badge farbe="#1f6e32" text="#fff">fertig</Badge> : <Badge farbe="#8a4b00" text="#fff">offen</Badge>) },
         ]} />
