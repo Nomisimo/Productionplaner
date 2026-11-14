@@ -1,10 +1,10 @@
 # Baut die Installer für Windows (x64) und macOS (Apple Silicon und Intel) und veröffentlicht sie als GitHub-Release.
 #
 # Auslöser:
-#  - ein Tag „v…“ pushen, z. B.  git tag v0.1.0 && git push origin v0.1.0
-#  - oder auf GitHub unter Actions → Release → „Run workflow“: baut den gewählten Branch; mit Haken „veröffentlichen“
-#    legt er den Tag v<version aus package.json> selbst an, ohne Haken liegen die Installer nur als Artefakt am Lauf.
-# Tags mit Bindestrich (…-beta.1) werden als Vorabversion veröffentlicht. Der Tag muss zur „version“ in package.json passen.
+#  - auf GitHub unter Actions → Release → „Run workflow“ (oder `gh workflow run release.yml --ref main`):
+#    baut main und legt das Release mit dem Tag v<version aus package.json> selbst an
+#  - oder ein Tag „v…“, der auf GitHub angelegt wurde
+# Versionen mit Bindestrich (…-beta.1) werden als Vorabversion veröffentlicht. Ein Tag muss zur „version“ in package.json passen.
 # Mac: ad-hoc signiert (kein Apple-Zertifikat), siehe Hinweis im Release-Text.
 name: Release
 
@@ -12,19 +12,17 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
-    inputs:
-      veroeffentlichen:
-        description: "Als GitHub-Release veröffentlichen (sonst nur Installer bauen und als Artefakt ablegen)"
-        type: boolean
-        default: false
 
 permissions:
   contents: write
+
+concurrency: { group: "release-${{ github.ref }}", cancel-in-progress: false }
 
 jobs:
   build:
     name: Build ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -32,18 +30,20 @@ jobs:
           - name: Windows x64
             os: windows-latest
             args: --win --x64
+            kennung: win
           - name: macOS Apple Silicon
             os: macos-latest
             args: --mac --arm64
+            kennung: mac-arm64
           # Intel-DMG auf einem Intel-Runner bauen (HFS+-Image, läuft auch auf älteren macOS-Versionen)
           - name: macOS Intel
             os: macos-15-intel
             args: --mac --x64
+            kennung: mac-x64
     steps:
-      # Core ist ein Submodule. Bei privaten Repos braucht es ein Token mit Lesezugriff (Secret LAGER_REPO_TOKEN).
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with: { submodules: recursive, token: "${{ secrets.LAGER_REPO_TOKEN || github.token }}" }
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with: { node-version: 22, cache: npm }
       - run: npm ci
       - run: npm ci
@@ -75,38 +75,55 @@ jobs:
           if [ "$n" != "1" ]; then echo "::error::$n DMGs gebaut, erwartet 1"; exit 1; fi
           hdiutil verify dist/*.dmg
 
-      - uses: actions/upload-artifact@v4
+      # Update-Dateien je Mac-Architektur getrennt benennen, der Release-Job führt sie zu latest-mac.yml zusammen
+      - name: Update-Datei umbenennen
+        if: runner.os == 'macOS'
+        shell: bash
+        run: mv dist/latest-mac.yml "dist/latest-mac-${{ matrix.kennung }}.yml"
+
+      - uses: actions/upload-artifact@v6
         with:
-          name: installer-${{ strategy.job-index }}
+          name: installer-${{ matrix.kennung }}
           path: |
             dist/*.exe
+            dist/*.exe.blockmap
             dist/*.dmg
+            dist/*.zip
+            dist/*.zip.blockmap
+            dist/latest*.yml
           if-no-files-found: error
 
-  release:
+  veroeffentlichen:
     name: GitHub-Release
     needs: build
-    if: github.ref_type == 'tag' || inputs.veroeffentlichen
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v7
         with: { path: artefakte, merge-multiple: true }
+
+      - name: latest-mac.yml zusammenführen
+        run: node scripts/latest-mac-zusammen.cjs artefakte
+
       - name: Tag und Release-Text
         id: notes
         shell: bash
         run: |
           PKG="v$(node -p "require('./package.json').version")"
           if [ "${{ github.ref_type }}" = "tag" ]; then TAG="${{ github.ref_name }}"; else TAG="$PKG"; fi
-          cat > notes.md <<'TXT'
-          ## Installieren
-          - **Windows:** `Productionplaner-…-win-x64.exe` herunterladen und doppelklicken. Meldet Windows „Der Computer wurde geschützt“: „Weitere Informationen“ → „Trotzdem ausführen“.
-          - **Mac:** passende DMG laden (arm64 = Apple Silicon M1/M2/M3…, x64 = Intel), öffnen, App in „Programme“ ziehen. Beim ersten Start: Rechtsklick auf die App → „Öffnen“ → „Öffnen“ (die App ist nicht bei Apple beglaubigt).
-          - Beim ersten Start die Adresse des Servers eintragen bzw. `LAGER_SERVER_URL` setzen (siehe Betriebsanleitung im Core-Repo, deploy/BETRIEB.md).
-          TXT
-          sed -i 's/^          //' notes.md
+          V="${TAG#v}"
+          node -e '
+            const v = process.argv[1];
+            const src = require("fs").readFileSync("CHANGELOG.md", "utf8");
+            const m = src.split(/^## /m).find((s) => s.startsWith("[" + v + "]") || s.startsWith(v));
+            console.log(m ? m.split("\n").slice(1).join("\n").trim() : "");
+          ' "$V" > notes.md
+          cat .github/release-hinweise.md >> notes.md
           echo "prerelease=$([[ "$TAG" == *-* ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          ls -l artefakte
+
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.notes.outputs.tag }}

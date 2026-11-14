@@ -1,6 +1,6 @@
 {
   "name": "productionplaner",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "private": true,
   "description": "Productionplaner – Planer-Familie (Planer-Lager)",
   "author": "Momo",
@@ -61,7 +61,8 @@
     },
     "mac": {
       "target": [
-        "dmg"
+        "dmg",
+        "zip"
       ],
       "category": "public.app-category.business",
       "identity": null,
@@ -80,6 +81,11 @@
         "dir"
       ]
     },
-    "afterPack": "scripts/mac-adhoc-signieren.cjs"
+    "afterPack": "scripts/mac-adhoc-signieren.cjs",
+    "publish": {
+      "provider": "github",
+      "owner": "Nomisimo",
+      "repo": "Productionplaner"
+    }
   }
 }
