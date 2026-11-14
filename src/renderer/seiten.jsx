@@ -1,6 +1,7 @@
 // Seiten des Productionplaners (Menü UI-1: Start · Aufträge · Kalkulation · System).
 import { Startseite } from "./seiten/Start.jsx";
 import { KundenListe, KundeFormular, KundeDetail } from "./seiten/Kunden.jsx";
+import { PersonalSeite, PersonDetail, FahrzeugeSeite } from "./seiten/Ressourcen.jsx";
 import { ProjektListe, ProjektFormular, ProjektDetail, ProjektPerNummer, AufgabenListe, Kalender } from "./seiten/Projekte.jsx";
 import { Zeiterfassung } from "./seiten/Zeiten.jsx";
 import { AngebotListe, AngebotDetail, Packliste, Kalkulator, Zeitrechner } from "./seiten/Angebote.jsx";
@@ -21,6 +22,9 @@ export const SEITEN = [
   { muster: "/projekte/nummer/:nummer", Komponente: ProjektPerNummer },
   { muster: "/projekte/:id/bearbeiten", Komponente: ProjektFormular },
   { muster: "/projekte/:id", Komponente: ProjektDetail },
+  { muster: "/personal", Komponente: PersonalSeite },
+  { muster: "/personal/:id", Komponente: PersonDetail },
+  { muster: "/fahrzeuge", Komponente: FahrzeugeSeite },
   { muster: "/aufgaben", Komponente: AufgabenListe },
   { muster: "/kalender", Komponente: Kalender },
   { muster: "/angebote", Komponente: AngebotListe },

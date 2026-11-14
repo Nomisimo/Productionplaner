@@ -1,5 +1,6 @@
 // Projekte/Jobs (FA-29–FA-31), Aufgaben (FA-32), Dateien (FA-33), Kalender (FA-34).
 import React, { useMemo, useRef, useState } from "react";
+import { ProjektRessourcen } from "./Ressourcen.jsx";
 import { Seite, Section, Knopf, Tabelle, Eingabe, Auswahl, Feld, Meldung, Textfeld, Modal, Tabs, Badge, Leerzustand, Icon, useDaten, useFormular, useBestaetigung } from "@lager/ui/bausteine.jsx";
 import { useLager, useLive } from "@lager/ui/huelle.jsx";
 import { ladeHerunter } from "@lager/ui/download.js";
@@ -149,7 +150,7 @@ export function ProjektDetail({ params, query }) {
       </div>
       {p.eltern && <p className="lp-hinweis">Job zu <a href={`#/projekte/${p.eltern.id}`}>{p.eltern.nummer} {p.eltern.name}</a></p>}
       <Tabs tabs={[{ id: "uebersicht", titel: "Übersicht" }, ...(p.art === "projekt" ? [{ id: "jobs", titel: `Jobs (${p.jobs.length})` }] : []),
-        { id: "aufgaben", titel: `Aufgaben (${k.aufgaben_offen})` }, { id: "dateien", titel: `Dateien (${p.dateien.length})` }, { id: "angebote", titel: `Angebote (${p.angebote.length})` }, { id: "zeiten", titel: "Zeiten" }]} aktiv={tab} onWechsel={setTab} />
+        { id: "aufgaben", titel: `Aufgaben (${k.aufgaben_offen})` }, { id: "dateien", titel: `Dateien (${p.dateien.length})` }, { id: "angebote", titel: `Angebote (${p.angebote.length})` }, { id: "zeiten", titel: "Zeiten" }, { id: "ressourcen", titel: "Personal & Fahrzeuge" }]} aktiv={tab} onWechsel={setTab} />
       {tab === "uebersicht" && <Section titel="Übersicht">
         {p.notizen ? <p style={{ whiteSpace: "pre-wrap", marginTop: 0 }}>{p.notizen}</p> : <p className="lp-hinweis" style={{ marginTop: 0 }}>Keine Notizen.</p>}
         <div className="lp-zeile">
@@ -177,6 +178,7 @@ export function ProjektDetail({ params, query }) {
       </Section>}
       {angebotDialog && <NeuesAngebot projektId={p.id} onSchliessen={() => setAngebotDialog(false)} />}
       {tab === "zeiten" && <ProjektZeiten p={p} />}
+      {tab === "ressourcen" && <ProjektRessourcen projektId={p.id} />}
       {jobsDialog && <JobsNachGewerk p={p} onFertig={(r) => { setJobsDialog(false); if (r) { setMeldung({ level: "success", text: r.text }); d.laden(); } }} />}
     </Seite>
   );
