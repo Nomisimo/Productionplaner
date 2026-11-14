@@ -11,7 +11,7 @@
     "build": "node scripts/build.cjs --minify",
     "build:dev": "node scripts/build.cjs",
     "start": "npm run build:dev && electron .",
-    "test": "node --test --test-reporter=dot test/",
+    "test": "node --test --test-reporter=dot \"test/**/*.test.js\"",
     "dist:mac": "npm run build && electron-builder --mac --arm64 --x64",
     "dist:win": "npm run build && electron-builder --win"
   },
