@@ -34,9 +34,9 @@ export function ProjektListe({ query }) {
       aktionen={darfP(nutzer) && <Knopf art="primaer" icon="Plus" onClick={() => navigiere("/projekte/neu")}>Neues Projekt</Knopf>}>
       <Section>
         <div className="lp-zeile" style={{ marginBottom: 12 }}>
-          <div style={{ flex: "1 1 240px" }}><Eingabe placeholder="Suchen: Nummer, Name, Kunde, Ort" aria-label="Suchen" value={f.q} onChange={setze("q")} /></div>
+          <div style={{ flex: "1 1 200px" }}><Eingabe placeholder="Suchen: Nummer, Name, Kunde, Ort" aria-label="Suchen" value={f.q} onChange={setze("q")} /></div>
           <div style={{ width: 180 }}><Auswahl aria-label="Status" leer="Alle Status" value={f.status} onChange={setze("status")} optionen={STATUS_OPT} /></div>
-          <div style={{ width: 140 }}><Auswahl aria-label="Art" leer="Projekte und Jobs" value={f.art} onChange={setze("art")} optionen={[{ wert: "projekt", titel: "Projekte" }, { wert: "job", titel: "Jobs" }]} /></div>
+          <div style={{ width: 175 }}><Auswahl aria-label="Art" leer="Projekte und Jobs" value={f.art} onChange={setze("art")} optionen={[{ wert: "projekt", titel: "Projekte" }, { wert: "job", titel: "Jobs" }]} /></div>
           <div style={{ width: 200 }}><Auswahl aria-label="Kunde" leer="Alle Kunden" value={f.kunde} onChange={setze("kunde")} optionen={(kunden.daten?.zeilen || []).map((k) => ({ wert: String(k.id), titel: k.firma || k.name }))} /></div>
           <div style={{ width: 150 }}><Eingabe type="date" aria-label="Von" value={f.von} onChange={setze("von")} /></div>
           <div style={{ width: 150 }}><Eingabe type="date" aria-label="Bis" value={f.bis} onChange={setze("bis")} /></div>
