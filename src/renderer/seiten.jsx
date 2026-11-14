@@ -5,7 +5,7 @@ import { ProjektListe, ProjektFormular, ProjektDetail, ProjektPerNummer, Aufgabe
 import { AngebotListe, AngebotDetail, Packliste, Kalkulator, Zeitrechner } from "./seiten/Angebote.jsx";
 import { normalisiereCode, istGeraetecode, normalisiereProjektcode } from "@lager/domain/codes.js";
 
-import { VerwaltungStart, ScannerVerwaltung } from "@lager/ui/verwaltung.jsx";
+import { VerwaltungStart, ScannerVerwaltung, ArbeitsplatzVerwaltung } from "@lager/ui/verwaltung.jsx";
 
 export const SEITEN = [
   { muster: "/", Komponente: Startseite },
@@ -27,6 +27,7 @@ export const SEITEN = [
   { muster: "/zeitrechner", Komponente: Zeitrechner },
   { muster: "/verwaltung", Komponente: VerwaltungStart },
   { muster: "/verwaltung/scanner", Komponente: ScannerVerwaltung },
+  { muster: "/verwaltung/arbeitsplaetze", Komponente: ArbeitsplatzVerwaltung },
 ];
 
 /** Globales Codefeld (FA-16): Projekt → hier, Gerät → Materialplaner. Vollständig in Phase 6. */
