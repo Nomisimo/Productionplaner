@@ -113,7 +113,8 @@ export function ProjektPerNummer({ params }) {
 export function ProjektDetail({ params, query }) {
   const { api, navigiere, nutzer, oeffneAndereApp } = useLager();
   const d = useDaten(() => api.get(`/api/v1/projekte/${params.id}`), [params.id]);
-  useLive(["projekt", "aufgabe", "geraet", "angebot"], (m) => { if (!m.id || m.id === Number(params.id) || m.projekt === Number(params.id) || m.projekt_id === Number(params.id) || m.typ?.startsWith("geraet")) d.laden(); });
+  // Architektur §4.5: Packfortschritt und Zone aus dem Materialplaner live
+  useLive(["projekt", "aufgabe", "geraet", "angebot", "packen", "zone"], (m) => { if (!m.id || m.id === Number(params.id) || m.projekt === Number(params.id) || m.projekt_id === Number(params.id) || m.typ?.startsWith("geraet") || m.typ?.startsWith("zone")) d.laden(); });
   const [tab, setTab] = useState(query.tab || "uebersicht");
   const [meldung, setMeldung] = useState(null);
   const [jobsDialog, setJobsDialog] = useState(false);
@@ -143,6 +144,7 @@ export function ProjektDetail({ params, query }) {
         <Kennzahl titel="Termin">{zeitraum(p)}</Kennzahl>
         <Kennzahl titel="Angebotswert netto">{euro(k.angebotswert_netto)}</Kennzahl>
         <Kennzahl titel="Geräte gepackt / gesamt">{k.gepackt} / {k.geraete}</Kennzahl>
+        <Kennzahl titel="Lager"><span data-testid="lager-stand">{p.gepackt_am ? `Verladen ${zeitpunktAnzeige(p.gepackt_am)}` : p.ladezone ? `Ladezone ${p.ladezone}` : "Keine Ladezone"}</span></Kennzahl>
         <Kennzahl titel="Offene Aufgaben">{k.aufgaben_offen}{k.aufgaben_ueberfaellig > 0 && <span style={{ color: "var(--lp-err)" }}> · {k.aufgaben_ueberfaellig} überfällig</span>}</Kennzahl>
       </div>
       {p.eltern && <p className="lp-hinweis">Job zu <a href={`#/projekte/${p.eltern.id}`}>{p.eltern.nummer} {p.eltern.name}</a></p>}
