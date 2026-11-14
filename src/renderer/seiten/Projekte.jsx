@@ -151,6 +151,7 @@ export function ProjektDetail({ params, query }) {
         {p.notizen ? <p style={{ whiteSpace: "pre-wrap", marginTop: 0 }}>{p.notizen}</p> : <p className="lp-hinweis" style={{ marginTop: 0 }}>Keine Notizen.</p>}
         <div className="lp-zeile">
           <Knopf icon="Package" onClick={() => oeffneAndereApp(`/geraete?projekt=${p.id}`)}>Material im Materialplaner</Knopf>
+          <Knopf icon="ClipboardList" onClick={() => oeffneAndereApp(`/projekte/${p.id}/packen`)}>Packansicht im Materialplaner</Knopf>
         </div>
       </Section>}
       {tab === "jobs" && <Section titel="Jobs" aktionen={darf && <>
