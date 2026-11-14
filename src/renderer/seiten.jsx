@@ -2,6 +2,7 @@
 import { Startseite } from "./seiten/Start.jsx";
 import { KundenListe, KundeFormular, KundeDetail } from "./seiten/Kunden.jsx";
 import { ProjektListe, ProjektFormular, ProjektDetail, ProjektPerNummer, AufgabenListe, Kalender } from "./seiten/Projekte.jsx";
+import { AngebotListe, AngebotDetail, Packliste, Kalkulator, Zeitrechner } from "./seiten/Angebote.jsx";
 import { normalisiereCode, istGeraetecode, normalisiereProjektcode } from "@lager/domain/codes.js";
 
 export const SEITEN = [
@@ -17,6 +18,11 @@ export const SEITEN = [
   { muster: "/projekte/:id", Komponente: ProjektDetail },
   { muster: "/aufgaben", Komponente: AufgabenListe },
   { muster: "/kalender", Komponente: Kalender },
+  { muster: "/angebote", Komponente: AngebotListe },
+  { muster: "/angebote/:id/packliste", Komponente: Packliste },
+  { muster: "/angebote/:id", Komponente: AngebotDetail },
+  { muster: "/kalkulator", Komponente: Kalkulator },
+  { muster: "/zeitrechner", Komponente: Zeitrechner },
 ];
 
 /** Globales Codefeld (FA-16): Projekt → hier, Gerät → Materialplaner. Vollständig in Phase 6. */

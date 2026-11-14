@@ -6,6 +6,7 @@ import { ladeHerunter } from "@lager/ui/download.js";
 import { fehlerText } from "@lager/ui/texte.js";
 import { datumAnzeige, zeitpunktAnzeige, heuteIso } from "@lager/domain/zeit.js";
 import { euro } from "@lager/domain/geld.js";
+import { AngebotBadge, NeuesAngebot } from "./Angebote.jsx";
 import { PROJEKT_STATUS, STATUS_FARBE, GEWERKE, DATEI_KATEGORIEN, DATEI_ENDUNGEN, MAX_DATEI, pruefeDatei, inlineErlaubt, endung } from "@lager/domain/projekt.js";
 
 const STATUS_OPT = Object.entries(PROJEKT_STATUS).map(([wert, titel]) => ({ wert, titel }));
@@ -111,10 +112,11 @@ export function ProjektPerNummer({ params }) {
 export function ProjektDetail({ params, query }) {
   const { api, navigiere, nutzer, oeffneAndereApp } = useLager();
   const d = useDaten(() => api.get(`/api/v1/projekte/${params.id}`), [params.id]);
-  useLive(["projekt", "aufgabe", "geraet"], (m) => { if (!m.id || m.id === Number(params.id) || m.projekt === Number(params.id) || m.typ?.startsWith("geraet")) d.laden(); });
+  useLive(["projekt", "aufgabe", "geraet", "angebot"], (m) => { if (!m.id || m.id === Number(params.id) || m.projekt === Number(params.id) || m.projekt_id === Number(params.id) || m.typ?.startsWith("geraet")) d.laden(); });
   const [tab, setTab] = useState(query.tab || "uebersicht");
   const [meldung, setMeldung] = useState(null);
   const [jobsDialog, setJobsDialog] = useState(false);
+  const [angebotDialog, setAngebotDialog] = useState(false);
   const [fragen, dialog] = useBestaetigung();
   if (d.fehler) return <Seite titel="Projekt"><Meldung level="error" text={d.fehler} /></Seite>;
   const p = d.daten;
@@ -144,7 +146,7 @@ export function ProjektDetail({ params, query }) {
       </div>
       {p.eltern && <p className="lp-hinweis">Job zu <a href={`#/projekte/${p.eltern.id}`}>{p.eltern.nummer} {p.eltern.name}</a></p>}
       <Tabs tabs={[{ id: "uebersicht", titel: "Übersicht" }, ...(p.art === "projekt" ? [{ id: "jobs", titel: `Jobs (${p.jobs.length})` }] : []),
-        { id: "aufgaben", titel: `Aufgaben (${k.aufgaben_offen})` }, { id: "dateien", titel: `Dateien (${p.dateien.length})` }, { id: "angebote", titel: "Angebote" }, { id: "zeiten", titel: "Zeiten" }]} aktiv={tab} onWechsel={setTab} />
+        { id: "aufgaben", titel: `Aufgaben (${k.aufgaben_offen})` }, { id: "dateien", titel: `Dateien (${p.dateien.length})` }, { id: "angebote", titel: `Angebote (${p.angebote.length})` }, { id: "zeiten", titel: "Zeiten" }]} aktiv={tab} onWechsel={setTab} />
       {tab === "uebersicht" && <Section titel="Übersicht">
         {p.notizen ? <p style={{ whiteSpace: "pre-wrap", marginTop: 0 }}>{p.notizen}</p> : <p className="lp-hinweis" style={{ marginTop: 0 }}>Keine Notizen.</p>}
         <div className="lp-zeile">
@@ -160,7 +162,14 @@ export function ProjektDetail({ params, query }) {
       </Section>}
       {tab === "aufgaben" && <ProjektAufgaben p={p} darf={darf} onAktion={aktion} />}
       {tab === "dateien" && <ProjektDateien p={p} darf={darf} onAktion={aktion} />}
-      {tab === "angebote" && <Section titel="Angebote"><Leerzustand text="Angebote folgen in Kürze (Phase 5)." icon="FileText" /></Section>}
+      {tab === "angebote" && <Section titel="Angebote" aktionen={(nutzer.admin || nutzer.rechte.angebote === "w") && <Knopf icon="Plus" onClick={() => setAngebotDialog(true)}>Neues Angebot</Knopf>}>
+        <Tabelle zeilen={p.angebote} leer="Noch keine Angebote." onZeile={(a) => navigiere(`/angebote/${a.id}`)} spalten={[
+          { titel: "Nummer", wert: (a) => <strong>{a.nummer}</strong> }, { titel: "Betreff", feld: "betreff" }, { titel: "Datum", wert: (a) => datumAnzeige(a.datum) },
+          { titel: "Gültig bis", wert: (a) => datumAnzeige(a.gueltig_bis) }, { titel: "Fassung", rechts: true, wert: (a) => a.fassung || "–" },
+          { titel: "Netto", rechts: true, wert: (a) => euro(a.summe_netto) }, { titel: "Status", wert: (a) => <AngebotBadge s={a.status} /> },
+        ]} />
+      </Section>}
+      {angebotDialog && <NeuesAngebot projektId={p.id} onSchliessen={() => setAngebotDialog(false)} />}
       {tab === "zeiten" && <Section titel="Zeiten"><Leerzustand text="Planungszeiten folgen in Kürze." icon="Timer" /></Section>}
       {jobsDialog && <JobsNachGewerk p={p} onFertig={(r) => { setJobsDialog(false); if (r) { setMeldung({ level: "success", text: r.text }); d.laden(); } }} />}
     </Seite>
