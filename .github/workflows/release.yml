@@ -1,0 +1,117 @@
+# Baut die Installer für Windows (x64) und macOS (Apple Silicon und Intel) und veröffentlicht sie als GitHub-Release.
+#
+# Auslöser:
+#  - ein Tag „v…“ pushen, z. B.  git tag v0.1.0 && git push origin v0.1.0
+#  - oder auf GitHub unter Actions → Release → „Run workflow“: baut den gewählten Branch; mit Haken „veröffentlichen“
+#    legt er den Tag v<version aus package.json> selbst an, ohne Haken liegen die Installer nur als Artefakt am Lauf.
+# Tags mit Bindestrich (…-beta.1) werden als Vorabversion veröffentlicht. Der Tag muss zur „version“ in package.json passen.
+# Mac: ad-hoc signiert (kein Apple-Zertifikat), siehe Hinweis im Release-Text.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      veroeffentlichen:
+        description: "Als GitHub-Release veröffentlichen (sonst nur Installer bauen und als Artefakt ablegen)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows x64
+            os: windows-latest
+            args: --win --x64
+          - name: macOS Apple Silicon
+            os: macos-latest
+            args: --mac --arm64
+          # Intel-DMG auf einem Intel-Runner bauen (HFS+-Image, läuft auch auf älteren macOS-Versionen)
+          - name: macOS Intel
+            os: macos-15-intel
+            args: --mac --x64
+    steps:
+      # Core ist ein Submodule. Bei privaten Repos braucht es ein Token mit Lesezugriff (Secret LAGER_REPO_TOKEN).
+      - uses: actions/checkout@v4
+        with: { submodules: recursive, token: "${{ secrets.LAGER_REPO_TOKEN || github.token }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm ci
+        working-directory: core
+
+      - name: Version prüfen
+        shell: bash
+        run: |
+          PKG="v$(node -p "require('./package.json').version")"
+          if [ "${{ github.ref_type }}" = "tag" ]; then TAG="${{ github.ref_name }}"; else TAG="$PKG"; fi
+          echo "Tag $TAG, package.json $PKG"
+          if [ "$TAG" != "$PKG" ]; then echo "::error::Tag $TAG passt nicht zu package.json ($PKG)"; exit 1; fi
+
+      - run: npm test
+      - run: npm run build
+
+      - name: Installer bauen
+        run: npx electron-builder ${{ matrix.args }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - name: Mac-Signatur prüfen
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          APP=$(ls -d dist/mac*/Productionplaner.app | head -1)
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          n=$(ls dist/*.dmg | wc -l | tr -d ' ')
+          if [ "$n" != "1" ]; then echo "::error::$n DMGs gebaut, erwartet 1"; exit 1; fi
+          hdiutil verify dist/*.dmg
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: installer-${{ strategy.job-index }}
+          path: |
+            dist/*.exe
+            dist/*.dmg
+          if-no-files-found: error
+
+  release:
+    name: GitHub-Release
+    needs: build
+    if: github.ref_type == 'tag' || inputs.veroeffentlichen
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { path: artefakte, merge-multiple: true }
+      - name: Tag und Release-Text
+        id: notes
+        shell: bash
+        run: |
+          PKG="v$(node -p "require('./package.json').version")"
+          if [ "${{ github.ref_type }}" = "tag" ]; then TAG="${{ github.ref_name }}"; else TAG="$PKG"; fi
+          cat > notes.md <<'TXT'
+          ## Installieren
+          - **Windows:** `Productionplaner-…-win-x64.exe` herunterladen und doppelklicken. Meldet Windows „Der Computer wurde geschützt“: „Weitere Informationen“ → „Trotzdem ausführen“.
+          - **Mac:** passende DMG laden (arm64 = Apple Silicon M1/M2/M3…, x64 = Intel), öffnen, App in „Programme“ ziehen. Beim ersten Start: Rechtsklick auf die App → „Öffnen“ → „Öffnen“ (die App ist nicht bei Apple beglaubigt).
+          - Beim ersten Start die Adresse des Servers eintragen bzw. `LAGER_SERVER_URL` setzen (siehe Betriebsanleitung im Core-Repo, deploy/BETRIEB.md).
+          TXT
+          sed -i 's/^          //' notes.md
+          echo "prerelease=$([[ "$TAG" == *-* ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.notes.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          name: Productionplaner ${{ steps.notes.outputs.tag }}
+          body_path: notes.md
+          prerelease: ${{ steps.notes.outputs.prerelease }}
+          files: artefakte/*

@@ -12,16 +12,74 @@
     "build:dev": "node scripts/build.cjs",
     "start": "npm run build:dev && electron .",
     "test": "node --test --test-reporter=dot \"test/**/*.test.js\"",
-    "dist:mac": "npm run build && electron-builder --mac --arm64 --x64",
-    "dist:win": "npm run build && electron-builder --win"
+    "dist:mac": "npm run build && electron-builder --mac --arm64 --x64 --publish never",
+    "dist:win": "npm run build && electron-builder --win --x64 --publish never"
   },
-  "dependencies": {
+  "devDependencies": {
+    "electron": "^45.3.2",
+    "electron-builder": "25.1.8",
+    "esbuild": "^0.28.2",
     "lucide-react": "^1.72.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
-  "devDependencies": {
-    "electron": "^45.3.2",
-    "esbuild": "^0.28.2"
+  "build": {
+    "appId": "de.planer-lager.productionplaner",
+    "productName": "Productionplaner",
+    "files": [
+      "dist-app/**",
+      "package.json"
+    ],
+    "protocols": [
+      {
+        "name": "Productionplaner",
+        "schemes": [
+          "productionplaner"
+        ]
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "differentialPackage": false
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.business",
+      "identity": null,
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "extendInfo": {
+        "NSCameraUsageDescription": "Der Productionplaner nutzt die Kamera nur, wenn du ausdrücklich mit der Kamera scannst.",
+        "NSBluetoothAlwaysUsageDescription": "Der Productionplaner verbindet sich auf Wunsch mit einem Bluetooth-Handscanner im seriellen Modus."
+      }
+    },
+    "dmg": {
+      "writeUpdateInfo": false
+    },
+    "linux": {
+      "target": [
+        "dir"
+      ]
+    },
+    "afterPack": "scripts/mac-adhoc-signieren.cjs"
   }
 }
