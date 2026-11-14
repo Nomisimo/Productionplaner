@@ -1,0 +1,19 @@
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request:
+  workflow_dispatch:
+jobs:
+  test-build:
+    runs-on: ubuntu-24.04
+    steps:
+      # Core ist ein Submodule. Bei privaten Repos braucht es ein Token mit Lesezugriff (Secret LAGER_REPO_TOKEN).
+      - uses: actions/checkout@v4
+        with: { submodules: recursive, token: "${{ secrets.LAGER_REPO_TOKEN || github.token }}" }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm ci
+        working-directory: core
+      - run: npm test
+      - run: npm run build
