@@ -1,4 +1,5 @@
 // FA-26 Kundenstamm (Liste, Detail, Bearbeiten, Dublettenwarnung), FA-27 Kontaktformular-PDF + Import, Adresssuche.
+import { SchadenListe } from "@lager/ui/schaeden.jsx";
 import { AenderungsVerlauf } from "@lager/ui/aenderungen.jsx";
 import React, { useEffect, useRef, useState } from "react";
 import { Seite, Section, Knopf, Tabelle, Eingabe, Feld, Meldung, Textfeld, Modal, useDaten, useFormular, useBestaetigung } from "@lager/ui/bausteine.jsx";
@@ -176,6 +177,7 @@ export function KundeDetail({ params }) {
         ]} />
       </Section>
       <KundeDatenschutz k={k} onFertig={(r) => { setMeldung(r); d.laden(); }} />
+      <SchadenListe pfad={`/api/v1/kunden/${k.id}/schaeden`} mitProjekt />
       <AenderungsVerlauf tabelle="kunde" id={k.id} />
       {dialog}
     </Seite>
