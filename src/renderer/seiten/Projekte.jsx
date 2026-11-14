@@ -7,6 +7,7 @@ import { fehlerText } from "@lager/ui/texte.js";
 import { datumAnzeige, zeitpunktAnzeige, heuteIso } from "@lager/domain/zeit.js";
 import { euro } from "@lager/domain/geld.js";
 import { AngebotBadge, NeuesAngebot } from "./Angebote.jsx";
+import { ProjektZeiten, TimerKnopf } from "./Zeiten.jsx";
 import { PROJEKT_STATUS, STATUS_FARBE, GEWERKE, DATEI_KATEGORIEN, DATEI_ENDUNGEN, MAX_DATEI, pruefeDatei, inlineErlaubt, endung } from "@lager/domain/projekt.js";
 
 const STATUS_OPT = Object.entries(PROJEKT_STATUS).map(([wert, titel]) => ({ wert, titel }));
@@ -150,6 +151,7 @@ export function ProjektDetail({ params, query }) {
       {tab === "uebersicht" && <Section titel="Übersicht">
         {p.notizen ? <p style={{ whiteSpace: "pre-wrap", marginTop: 0 }}>{p.notizen}</p> : <p className="lp-hinweis" style={{ marginTop: 0 }}>Keine Notizen.</p>}
         <div className="lp-zeile">
+          <TimerKnopf projekt={p} />
           <Knopf icon="Package" onClick={() => oeffneAndereApp(`/geraete?projekt=${p.id}`)}>Material im Materialplaner</Knopf>
           <Knopf icon="ClipboardList" onClick={() => oeffneAndereApp(`/projekte/${p.id}/packen`)}>Packansicht im Materialplaner</Knopf>
           <Knopf icon="ScanLine" onClick={() => oeffneAndereApp(`/projekte/${p.id}/rueckgabe`)}>Rückgabe im Materialplaner</Knopf>
@@ -172,7 +174,7 @@ export function ProjektDetail({ params, query }) {
         ]} />
       </Section>}
       {angebotDialog && <NeuesAngebot projektId={p.id} onSchliessen={() => setAngebotDialog(false)} />}
-      {tab === "zeiten" && <Section titel="Zeiten"><Leerzustand text="Planungszeiten folgen in Kürze." icon="Timer" /></Section>}
+      {tab === "zeiten" && <ProjektZeiten p={p} />}
       {jobsDialog && <JobsNachGewerk p={p} onFertig={(r) => { setJobsDialog(false); if (r) { setMeldung({ level: "success", text: r.text }); d.laden(); } }} />}
     </Seite>
   );

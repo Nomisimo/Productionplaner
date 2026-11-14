@@ -2,7 +2,7 @@
 // Kalkulator und Zeitrechner (FA-45). Rechnen über @lager/domain (gleiche Formeln wie der Server).
 import React, { useEffect, useMemo, useState } from "react";
 import { Seite, Section, Knopf, Tabelle, Eingabe, Auswahl, Feld, Meldung, Textfeld, Modal, Badge, Leerzustand, GeldEingabe, useDaten, useBestaetigung } from "@lager/ui/bausteine.jsx";
-import { useLager, useLive } from "@lager/ui/huelle.jsx";
+import { useLager, useLive, usePlanungsProjekt } from "@lager/ui/huelle.jsx";
 import { ladeHerunter } from "@lager/ui/download.js";
 import { fehlerText } from "@lager/ui/texte.js";
 import { datumAnzeige, zeitpunktAnzeige } from "@lager/domain/zeit.js";
@@ -92,6 +92,7 @@ export function AngebotDetail({ params }) {
   const d = useDaten(() => api.get(`/api/v1/angebote/${params.id}`), [params.id]);
   const artikel = useDaten(() => api.get("/api/v1/artikel?aktiv=1&limit=500"), []);
   const basis = useDaten(() => api.get("/api/v1/einstellungen/basis"), []);
+  usePlanungsProjekt(d.daten?.projekt_id); // R-62: Angebot zählt als Planung am Projekt
   const [k, setK] = useState(null);
   const [pos, setPos] = useState([]);
   const [geaendert, setGeaendert] = useState(false);

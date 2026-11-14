@@ -2,6 +2,7 @@
 import { Startseite } from "./seiten/Start.jsx";
 import { KundenListe, KundeFormular, KundeDetail } from "./seiten/Kunden.jsx";
 import { ProjektListe, ProjektFormular, ProjektDetail, ProjektPerNummer, AufgabenListe, Kalender } from "./seiten/Projekte.jsx";
+import { Zeiterfassung } from "./seiten/Zeiten.jsx";
 import { AngebotListe, AngebotDetail, Packliste, Kalkulator, Zeitrechner } from "./seiten/Angebote.jsx";
 import { normalisiereCode, istGeraetecode, normalisiereProjektcode } from "@lager/domain/codes.js";
 
@@ -23,6 +24,7 @@ export const SEITEN = [
   { muster: "/angebote", Komponente: AngebotListe },
   { muster: "/angebote/:id/packliste", Komponente: Packliste },
   { muster: "/angebote/:id", Komponente: AngebotDetail },
+  { muster: "/zeiterfassung", Komponente: Zeiterfassung },
   { muster: "/kalkulator", Komponente: Kalkulator },
   { muster: "/zeitrechner", Komponente: Zeitrechner },
   { muster: "/verwaltung", Komponente: VerwaltungStart },
