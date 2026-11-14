@@ -152,6 +152,7 @@ export function ProjektDetail({ params, query }) {
         <div className="lp-zeile">
           <Knopf icon="Package" onClick={() => oeffneAndereApp(`/geraete?projekt=${p.id}`)}>Material im Materialplaner</Knopf>
           <Knopf icon="ClipboardList" onClick={() => oeffneAndereApp(`/projekte/${p.id}/packen`)}>Packansicht im Materialplaner</Knopf>
+          <Knopf icon="ScanLine" onClick={() => oeffneAndereApp(`/projekte/${p.id}/rueckgabe`)}>Rückgabe im Materialplaner</Knopf>
         </div>
       </Section>}
       {tab === "jobs" && <Section titel="Jobs" aktionen={darf && <>
