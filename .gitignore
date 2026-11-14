@@ -1,0 +1,10 @@
+node_modules/
+dist/
+dist-app/
+dist-test/
+release/
+e2e/artefakte/
+.env
+*.log
+.DS_Store
+lokal/
