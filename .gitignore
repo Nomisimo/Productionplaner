@@ -8,3 +8,4 @@ e2e/artefakte/
 *.log
 .DS_Store
 lokal/
+dist-web/

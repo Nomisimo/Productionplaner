@@ -10,6 +10,7 @@
   "scripts": {
     "build": "node scripts/build.cjs --minify",
     "build:dev": "node scripts/build.cjs",
+    "build:web": "node scripts/build.cjs --web --minify",
     "start": "npm run build:dev && electron .",
     "test": "node --test --test-reporter=dot \"test/**/*.test.js\"",
     "dist:mac": "npm run build && electron-builder --mac --arm64 --x64 --publish never",
