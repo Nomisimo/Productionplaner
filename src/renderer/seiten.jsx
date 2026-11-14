@@ -6,6 +6,7 @@ import { Zeiterfassung } from "./seiten/Zeiten.jsx";
 import { AngebotListe, AngebotDetail, Packliste, Kalkulator, Zeitrechner } from "./seiten/Angebote.jsx";
 import { normalisiereCode, istGeraetecode, normalisiereProjektcode } from "@lager/domain/codes.js";
 
+import { SuchSeite } from "@lager/ui/uebersicht.jsx";
 import { VerwaltungStart, ScannerVerwaltung, ArbeitsplatzVerwaltung } from "@lager/ui/verwaltung.jsx";
 
 export const SEITEN = [
@@ -27,6 +28,7 @@ export const SEITEN = [
   { muster: "/zeiterfassung", Komponente: Zeiterfassung },
   { muster: "/kalkulator", Komponente: Kalkulator },
   { muster: "/zeitrechner", Komponente: Zeitrechner },
+  { muster: "/suche", Komponente: SuchSeite },
   { muster: "/verwaltung", Komponente: VerwaltungStart },
   { muster: "/verwaltung/scanner", Komponente: ScannerVerwaltung },
   { muster: "/verwaltung/arbeitsplaetze", Komponente: ArbeitsplatzVerwaltung },
