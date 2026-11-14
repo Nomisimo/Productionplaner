@@ -300,7 +300,7 @@ function ProjektDateien({ p, darf, onAktion }) {
         </div> },
       ]} />
       {ansicht && <Modal titel={ansicht.name} breite={900} onSchliessen={() => { URL.revokeObjectURL(ansicht.url); setAnsicht(null); }}>
-        {ansicht.pdf ? <iframe title={ansicht.name} src={ansicht.url} style={{ width: "100%", height: "70vh", border: 0 }} sandbox="" /> : <img alt={ansicht.name} src={ansicht.url} style={{ maxWidth: "100%" }} />}
+        {ansicht.pdf ? <object aria-label={ansicht.name} data={ansicht.url} type="application/pdf" style={{ width: "100%", height: "70vh" }}><p className="lp-hinweis">Die Vorschau ist hier nicht möglich. Lade die Datei herunter und öffne sie im PDF-Programm.</p></object> : <img alt={ansicht.name} src={ansicht.url} style={{ maxWidth: "100%" }} />}
       </Modal>}
     </Section>
   );
