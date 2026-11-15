@@ -68,7 +68,7 @@ export function ProjektFormular({ params, query }) {
   const eltern = useDaten(() => api.get("/api/v1/projekte?art=projekt&limit=500"), []);
   const vorlagen = useDaten(() => (neu ? api.get("/api/v1/projektvorlagen").catch(() => ({ zeilen: [] })) : Promise.resolve(null)), [neu]);
   const alt = useDaten(() => (neu ? Promise.resolve(null) : api.get(`/api/v1/projekte/${params.id}`).then((p) => {
-    f.setWerte({ ...LEER, ...Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v ?? ""])), kunde_id: String(p.kunde_id), uebergeordnet_id: p.uebergeordnet_id ? String(p.uebergeordnet_id) : "" });
+    f.geladen({ ...LEER, ...Object.fromEntries(Object.entries(p).map(([k, v]) => [k, v ?? ""])), kunde_id: String(p.kunde_id), uebergeordnet_id: p.uebergeordnet_id ? String(p.uebergeordnet_id) : "" });
     return p;
   })), [params.id]);
   const w = f.werte;
