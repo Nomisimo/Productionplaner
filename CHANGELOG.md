@@ -16,6 +16,8 @@ Materialplaner und Productionplaner tragen immer dieselbe Versionsnummer.
 - Lizenz: Apache 2.0
 - Behoben: Wiederherstellen einer Sicherung brach ab, wenn ein Projekt nach dem Anlegen seiner Jobs geändert wurde
 - Kopfleiste passt auch bei 1024 px Breite
+- Behoben: Kam ein Formular verzögert vom Server, konnte es eine schon gemachte Eingabe überschreiben
+- Behoben: Live-Updates kamen manchmal an, bevor die Änderung gespeichert war (Anzeige blieb auf altem Stand)
 - Detailseiten zeigen „Lädt …“ statt einer leeren Seite
 
 ## [0.2.0-beta.1] – 2026-11-15
