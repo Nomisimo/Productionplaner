@@ -148,7 +148,7 @@ export function KundeDetail({ params }) {
   useLive(["kunde", "projekt", "angebot"], () => d.laden());
   const k = d.daten;
   if (d.fehler) return <Seite titel="Kunde"><Meldung level="error" text={d.fehler} /></Seite>;
-  if (!k) return null;
+  if (!k) return <Seite titel="Kunde"><p className="lp-hinweis">Lädt …</p></Seite>;
   const darf = nutzer.admin || nutzer.rechte.kunden === "w";
   return (
     <Seite titel={k.firma || k.name} untertitel={k.firma ? k.name : ""} aktionen={darf && <>
