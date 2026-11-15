@@ -4,7 +4,7 @@
   "private": true,
   "description": "Productionplaner – Planer-Familie (Planer-Lager)",
   "author": "Momo",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "dist-app/main.cjs",
   "scripts": {
