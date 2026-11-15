@@ -5,6 +5,19 @@ Materialplaner und Productionplaner tragen immer dieselbe Versionsnummer.
 
 ## [Unveröffentlicht]
 
+## [0.3.0-beta.1] – 2026-11-15
+
+- Gleichzeitig arbeiten: Speichert jemand anderes denselben Datensatz, siehst du ein Band mit „Neu laden“ oder „Meine Eingaben behalten“; beim Speichern einen Vergleich „Deine Werte | Aktuelle Werte“ statt still zu überschreiben
+- Wer gerade dasselbe Projekt offen hat, steht als Chip im Projektkopf
+- Willkommen beim ersten Login und Einführungs-Touren für beide Apps, das Zusammenspiel und den Arbeitsplatz im Lager; alle Touren unter System › Hilfe
+- „Was ist neu?“: Klick auf die Versionsnummer oben
+- Hinweis in der Desktop-App, wenn auf GitHub eine neuere Version liegt
+- Beispielbetrieb zum Ausprobieren (`npm run seed -- --seed demo`), vom Admin wieder löschbar
+- Lizenz: Apache 2.0
+- Behoben: Wiederherstellen einer Sicherung brach ab, wenn ein Projekt nach dem Anlegen seiner Jobs geändert wurde
+- Kopfleiste passt auch bei 1024 px Breite
+- Detailseiten zeigen „Lädt …“ statt einer leeren Seite
+
 ## [0.2.0-beta.1] – 2026-11-15
 
 - Productionplaner läuft jetzt auch im Browser: `https://<server>/productionplaner/`, gleiches Konto, Live-Updates, eine Anmeldung für beide Apps
