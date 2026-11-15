@@ -153,10 +153,10 @@ function SatzEinstellungen({ onGespeichert }) {
   const e = useDaten(() => api.get("/api/v1/verwaltung/einstellungen"), []);
   const artikel = useDaten(() => api.get("/api/v1/artikel?limit=500"), []);
   const f = useFormular(null);
-  if (e.daten && !f.werte) f.setWerte({ zeit_artikel: e.daten.zeit_artikel == null ? "" : String(e.daten.zeit_artikel), zeit_prozent_planung: String(e.daten.zeit_prozent_planung), zeit_basis_stundensatz: e.daten.zeit_basis_stundensatz });
+  if (e.daten && !f.werte) f.setWerte({ zeit_artikel: e.daten.zeit_artikel == null ? "" : String(e.daten.zeit_artikel), zeit_prozent_planung: String(e.daten.zeit_prozent_planung), zeit_basis_stundensatz: e.daten.zeit_basis_stundensatz, version: e.daten.version });
   if (!f.werte) return null;
   const speichern = () => f.absenden(async (w) => {
-    const r = await api.put("/api/v1/verwaltung/einstellungen", { zeit_artikel: w.zeit_artikel ? Number(w.zeit_artikel) : null, zeit_prozent_planung: Number(w.zeit_prozent_planung), zeit_basis_stundensatz: w.zeit_basis_stundensatz });
+    const r = await api.put("/api/v1/verwaltung/einstellungen", { zeit_artikel: w.zeit_artikel ? Number(w.zeit_artikel) : null, zeit_prozent_planung: Number(w.zeit_prozent_planung), zeit_basis_stundensatz: w.zeit_basis_stundensatz, version: w.version });
     onGespeichert();
     return r;
   });

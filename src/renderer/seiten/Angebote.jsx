@@ -1,7 +1,7 @@
 // Angebote (FA-41–FA-44): Liste, Editor mit Überbuchungshinweis, Statuswechsel mit Fassungen, PDF, Packliste.
 // Kalkulator und Zeitrechner (FA-45). Rechnen über @lager/domain (gleiche Formeln wie der Server).
 import React, { useEffect, useMemo, useState } from "react";
-import { Seite, Section, Knopf, Tabelle, Eingabe, Auswahl, Feld, Meldung, Textfeld, Modal, Badge, Leerzustand, GeldEingabe, useDaten, useBestaetigung } from "@lager/ui/bausteine.jsx";
+import { Seite, Section, Knopf, Tabelle, Eingabe, Auswahl, Feld, Meldung, Textfeld, Modal, Badge, Leerzustand, GeldEingabe, useDaten, useBestaetigung, FassungsKonflikt, AenderungsBand, Praesenz } from "@lager/ui/bausteine.jsx";
 import { useLager, useLive, usePlanungsProjekt } from "@lager/ui/huelle.jsx";
 import { ladeHerunter } from "@lager/ui/download.js";
 import { fehlerText } from "@lager/ui/texte.js";
@@ -100,13 +100,21 @@ export function AngebotDetail({ params }) {
   const [verf, setVerf] = useState({});
   const [pdf, setPdf] = useState(null);
   const [fragen, dialog] = useBestaetigung();
-  useLive(["angebot"], (m) => { if (m.id === Number(params.id) && !geaendert) d.laden(); });
+  // GLEICH: eigene Fassung beim „Meine Eingaben behalten“, Band bei Änderung woanders während eigener Eingaben
+  const [ueberVersion, setUeberVersion] = useState(null);
+  const [band, setBand] = useState(null);
+  useLive(["angebot"], (m) => {
+    if (m.id !== Number(params.id)) return;
+    if (!geaendert) { d.laden(); return; }
+    const v = ueberVersion ?? d.daten?.version;
+    if (m.version != null && v != null && Number(m.version) > Number(v)) setBand({ von: m.von });
+  });
   useEffect(() => {
     if (!d.daten) return;
     const a = d.daten;
     setK({ betreff: a.betreff, datum: a.datum, gueltig_bis: a.gueltig_bis || "", tage: a.tage, folgetag_prozent: a.folgetag_prozent, rabatt_prozent: a.rabatt_prozent, einleitung: a.einleitung, schlusstext: a.schlusstext });
     setPos(a.positionen.map((p) => ({ ...p, _k: String(p.id), folgetag_prozent: p.folgetag_prozent ?? "", stunden: p.stunden ?? "", artikel_id: p.artikel_id ? String(p.artikel_id) : "" })));
-    setGeaendert(false);
+    setGeaendert(false); setUeberVersion(null); setBand(null);
   }, [d.daten]);
   const artikelKarte = useMemo(() => new Map((artikel.daten?.zeilen || []).map((x) => [String(x.id), x])), [artikel.daten]);
   // R-27 Live-Verfügbarkeit für alle Mietartikel (eigenes Angebot ausgenommen)
@@ -157,14 +165,22 @@ export function AngebotDetail({ params }) {
   const speichern = async () => {
     setMeldung(null);
     try {
-      const r = await api.put(`/api/v1/angebote/${a.id}`, { ...k, version: a.version, tage: Number(k.tage), folgetag_prozent: Number(k.folgetag_prozent), rabatt_prozent: Number(zahl(k.rabatt_prozent)) || 0,
+      const r = await api.put(`/api/v1/angebote/${a.id}`, { ...k, version: ueberVersion ?? a.version, tage: Number(k.tage), folgetag_prozent: Number(k.folgetag_prozent), rabatt_prozent: Number(zahl(k.rabatt_prozent)) || 0,
         positionen: pos.map((p) => ({ art: p.art, artikel_id: p.artikel_id ? Number(p.artikel_id) : null, bezeichnung: p.bezeichnung, menge: zahl(p.menge), tage: Number(p.tage),
           einzelpreis: p.einzelpreis, folgetag_prozent: p.folgetag_prozent === "" ? null : Number(p.folgetag_prozent), einheit: p.einheit, beschreibung: p.beschreibung, stunden: p.stunden === "" ? null : zahl(p.stunden) })) });
       setMeldung({ level: r.level, text: r.text });
       setGeaendert(false);
       d.laden();
       return true;
-    } catch (e) { setMeldung({ level: "error", text: fehlerText(e) }); return false; }
+    } catch (e) {
+      const aktuell = e.status === 409 ? e.daten?.aktuell : null;
+      setMeldung(aktuell ? { level: "error", text: fehlerText(e), children: <FassungsKonflikt werte={k} aktuell={aktuell}
+        titel={{ betreff: "Betreff", datum: "Datum", gueltig_bis: "Gültig bis", tage: "Miettage", folgetag_prozent: "Folgetag %", rabatt_prozent: "Rabatt %", einleitung: "Einleitung", schlusstext: "Schlusstext" }}
+        onLaden={() => { setMeldung({ level: "info", text: "Neue Fassung geladen. Übernimm deine Änderungen und speichere erneut." }); d.laden(); }}
+        onBehalten={() => { setUeberVersion(aktuell.version); setMeldung({ level: "warning", text: "Deine Eingaben bleiben stehen. Wenn du jetzt speicherst, ersetzen sie die neue Fassung." }); }} /> }
+        : { level: "error", text: fehlerText(e) });
+      return false;
+    }
   };
   const status = async (nach) => {
     if (geaendert && !(await speichern())) return;
@@ -177,6 +193,7 @@ export function AngebotDetail({ params }) {
   return (
     <Seite titel={`${a.nummer} ${a.betreff || ""}`.trim()} untertitel={`Projekt ${a.projekt_nummer} ${a.projekt_name} · ${a.kunde_firma || a.kunde}${a.beginn ? ` · ${datumAnzeige(a.beginn)}${a.ende && a.ende !== a.beginn ? ` – ${datumAnzeige(a.ende)}` : ""}` : " · ohne Termin"}${a.fassung ? ` · Fassung ${a.fassung}` : ""}`}
       aktionen={<>
+        <Praesenz ort={`projekt:${a.projekt_id}`} />
         <AngebotBadge s={a.status} />
         <Knopf icon="Eye" onClick={() => setPdf({ pfad: `/api/v1/angebote/${a.id}/pdf${a.status === "entwurf" || geaendert ? "?vorschau=1" : ""}`, titel: `${a.nummer} PDF` })}>PDF</Knopf>
         <Knopf icon="ClipboardList" onClick={() => navigiere(`/angebote/${a.id}/packliste`)}>Packliste</Knopf>
@@ -190,6 +207,7 @@ export function AngebotDetail({ params }) {
         }} />}
       </>}>
       {dialog}
+      {band && <AenderungsBand von={band.von} onNeuLaden={() => { setBand(null); d.laden(); }} onBehalten={() => setBand(null)} />}
       {meldung && <Meldung {...meldung} onSchliessen={() => setMeldung(null)} />}
       {!angebotBearbeitbar(a.status) && <Meldung level="info" text={`Dieses Angebot ist „${ANGEBOT_STATUS[a.status]}“ und nur noch lesbar.`} />}
       <Section titel="Kopf" icon="FileText">

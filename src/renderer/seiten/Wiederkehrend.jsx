@@ -11,7 +11,7 @@ function RegelDialog({ regel, onFertig, onSchliessen }) {
   const leute = useDaten(() => api.get("/api/v1/benutzer/auswahl").catch(() => ({ zeilen: [] })), []);
   const projekte = useDaten(() => api.get("/api/v1/projekte?limit=500").catch(() => ({ zeilen: [] })), []);
   const f = useFormular({ text: regel?.text || "", rhythmus: regel?.rhythmus || "woechentlich", alle: regel?.alle || 1, naechste: regel?.naechste || heuteIso(),
-    vorlauf_tage: regel?.vorlauf_tage ?? 0, zugewiesen_id: regel?.zugewiesen_id ? String(regel.zugewiesen_id) : "", projekt_id: regel?.projekt_id ? String(regel.projekt_id) : "", aktiv: regel?.aktiv ?? true });
+    vorlauf_tage: regel?.vorlauf_tage ?? 0, zugewiesen_id: regel?.zugewiesen_id ? String(regel.zugewiesen_id) : "", projekt_id: regel?.projekt_id ? String(regel.projekt_id) : "", aktiv: regel?.aktiv ?? true, version: regel?.version });
   const speichern = async () => {
     const r = await f.absenden((w) => {
       const body = { ...w, alle: Number(w.alle), vorlauf_tage: Number(w.vorlauf_tage), zugewiesen_id: w.zugewiesen_id ? Number(w.zugewiesen_id) : null, projekt_id: w.projekt_id ? Number(w.projekt_id) : null };

@@ -34,7 +34,7 @@ export function EinsatzDialog({ einsatz, projektId, positionen = [], onSchliesse
   const projekte = useDaten(() => (projektId ? Promise.resolve({ zeilen: [] }) : api.get("/api/v1/projekte?limit=500&status=anfrage,angebot_gesendet,bestaetigt,laeuft")), [projektId]);
   const f = useFormular({ personal_id: einsatz?.personal_id ? String(einsatz.personal_id) : "", projekt_id: String(einsatz?.projekt_id || projektId || ""),
     beginn: isoZuBerlin(einsatz?.beginn) || `${heuteIso()}T08:00`, ende: isoZuBerlin(einsatz?.ende) || `${heuteIso()}T17:00`, rolle: einsatz?.rolle || "",
-    angebot_position_id: einsatz?.angebot_position_id ? String(einsatz.angebot_position_id) : "", notiz: einsatz?.notiz || "" });
+    angebot_position_id: einsatz?.angebot_position_id ? String(einsatz.angebot_position_id) : "", notiz: einsatz?.notiz || "", version: einsatz?.version });
   const k = useKonfliktSpeichern();
   const sende = (trotzdem) => {
     const w = f.werte;
@@ -78,7 +78,7 @@ export function FahrtDialog({ fahrt, projektId, onSchliessen, onFertig }) {
   const projekte = useDaten(() => (projektId ? Promise.resolve({ zeilen: [] }) : api.get("/api/v1/projekte?limit=500&status=anfrage,angebot_gesendet,bestaetigt,laeuft")), [projektId]);
   const f = useFormular({ fahrzeug_id: fahrt?.fahrzeug_id ? String(fahrt.fahrzeug_id) : "", projekt_id: String(fahrt?.projekt_id || projektId || ""),
     abholung: isoZuBerlin(fahrt?.abholung) || `${heuteIso()}T07:00`, rueckkehr: isoZuBerlin(fahrt?.rueckkehr) || `${heuteIso()}T12:00`, ziel: fahrt?.ziel || "",
-    fahrer_id: fahrt?.fahrer_id ? String(fahrt.fahrer_id) : "", notiz: fahrt?.notiz || "" });
+    fahrer_id: fahrt?.fahrer_id ? String(fahrt.fahrer_id) : "", notiz: fahrt?.notiz || "", version: fahrt?.version });
   const k = useKonfliktSpeichern();
   const sende = (trotzdem) => {
     const w = f.werte;

@@ -9,7 +9,7 @@ const ARTEN = { notiz: "Notiz", telefon: "Telefonat", email: "E-Mail", treffen: 
 
 function KontaktDialog({ kundeId, kontakt, onFertig, onSchliessen }) {
   const { api } = useLager();
-  const f = useFormular({ name: kontakt?.name || "", funktion: kontakt?.funktion || "", telefon: kontakt?.telefon || "", email: kontakt?.email || "", notiz: kontakt?.notiz || "", haupt: kontakt?.haupt || false });
+  const f = useFormular({ name: kontakt?.name || "", funktion: kontakt?.funktion || "", telefon: kontakt?.telefon || "", email: kontakt?.email || "", notiz: kontakt?.notiz || "", haupt: kontakt?.haupt || false, version: kontakt?.version });
   const speichern = async () => {
     const r = await f.absenden((w) => (kontakt ? api.put(`/api/v1/kontakte/${kontakt.id}`, w) : api.post(`/api/v1/kunden/${kundeId}/kontakte`, w)));
     if (r) onFertig(r);

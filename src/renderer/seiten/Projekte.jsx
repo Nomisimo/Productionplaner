@@ -5,7 +5,7 @@ import { SchadenListe } from "@lager/ui/schaeden.jsx";
 import { AenderungsVerlauf } from "@lager/ui/aenderungen.jsx";
 import React, { useMemo, useRef, useState } from "react";
 import { ProjektRessourcen } from "./Ressourcen.jsx";
-import { Seite, Section, Knopf, Tabelle, Eingabe, Auswahl, Feld, Meldung, Textfeld, Modal, Tabs, Badge, Leerzustand, Icon, useDaten, useFormular, useBestaetigung } from "@lager/ui/bausteine.jsx";
+import { Seite, Section, Knopf, Tabelle, Eingabe, Auswahl, Feld, Meldung, Textfeld, Modal, Tabs, Badge, Leerzustand, Icon, useDaten, useFormular, useBestaetigung, Praesenz } from "@lager/ui/bausteine.jsx";
 import { useLager, useLive } from "@lager/ui/huelle.jsx";
 import { ladeHerunter } from "@lager/ui/download.js";
 import { fehlerText } from "@lager/ui/texte.js";
@@ -62,7 +62,8 @@ const LEER = { art: "projekt", name: "", kunde_id: "", status: "anfrage", beginn
 export function ProjektFormular({ params, query }) {
   const { api, navigiere } = useLager();
   const neu = !params.id;
-  const f = useFormular({ ...LEER, uebergeordnet_id: query.projekt || "", art: query.projekt ? "job" : "projekt", kunde_id: query.kunde || "" });
+  const f = useFormular({ ...LEER, uebergeordnet_id: query.projekt || "", art: query.projekt ? "job" : "projekt", kunde_id: query.kunde || "" },
+    { live: neu ? null : { typ: "projekt", id: params.id }, laden: () => api.get(`/api/v1/projekte/${params.id}`), zurueck: () => navigiere("/projekte") });
   const kunden = useDaten(() => api.get("/api/v1/kunden?limit=500"), []);
   const eltern = useDaten(() => api.get("/api/v1/projekte?art=projekt&limit=500"), []);
   const vorlagen = useDaten(() => (neu ? api.get("/api/v1/projektvorlagen").catch(() => ({ zeilen: [] })) : Promise.resolve(null)), [neu]);
@@ -74,13 +75,14 @@ export function ProjektFormular({ params, query }) {
   const istJob = w.art === "job";
   const zuProjekt = istJob && !!w.uebergeordnet_id;
   const speichern = () => f.absenden(async (x) => {
-    const daten = { ...x, kunde_id: x.kunde_id ? Number(x.kunde_id) : null, uebergeordnet_id: istJob && x.uebergeordnet_id ? Number(x.uebergeordnet_id) : null, version: alt.daten?.version, vorlage_id: neu && x.vorlage_id ? Number(x.vorlage_id) : undefined };
+    const daten = { ...x, kunde_id: x.kunde_id ? Number(x.kunde_id) : null, uebergeordnet_id: istJob && x.uebergeordnet_id ? Number(x.uebergeordnet_id) : null, version: x.version ?? alt.daten?.version, vorlage_id: neu && x.vorlage_id ? Number(x.vorlage_id) : undefined };
     const r = neu ? await api.post("/api/v1/projekte", daten) : await api.put(`/api/v1/projekte/${params.id}`, daten);
     navigiere(`/projekte/${r.projekt.id}`);
     return r;
   });
   return (
     <Seite titel={neu ? (istJob ? "Neuer Job" : "Neues Projekt") : `Bearbeiten: ${alt.daten?.nummer || ""}`} aktionen={<Knopf art="geist" onClick={() => history.back()}>Zurück</Knopf>}>
+      {f.band}
       {f.meldung && <Meldung {...f.meldung} />}
       {alt.fehler && <Meldung level="error" text={alt.fehler} />}
       <Section titel="Stammdaten">
@@ -136,7 +138,9 @@ export function ProjektDetail({ params, query }) {
   const k = p.kennzahlen;
   return (
     <Seite titel={`${p.nummer} ${p.name}`} untertitel={`${p.art === "job" ? `Job${p.gewerk ? ` · ${p.gewerk}` : ""}` : "Projekt"} · ${p.kunde_firma || p.kunde} · ${zeitraum(p)}${p.ort ? ` · ${p.ort}` : ""}`}
-      aktionen={darf && <>
+      aktionen={<>
+        <Praesenz ort={`projekt:${p.id}`} />
+        {darf && <>
         <div style={{ width: 190 }}><Auswahl aria-label="Status ändern" value={p.status} onChange={(e) => aktion(() => api.post(`/api/v1/projekte/${p.id}/status`, { status: e.target.value }))} optionen={STATUS_OPT} /></div>
         <Knopf icon="Pencil" onClick={() => navigiere(`/projekte/${p.id}/bearbeiten`)}>Bearbeiten</Knopf>
         <VorlageAktionen p={p} onFertig={(r) => { setMeldung({ level: r.level || "success", text: r.text }); d.laden(); }} />
@@ -145,6 +149,7 @@ export function ProjektDetail({ params, query }) {
           if (!(await fragen({ titel: "Projekt löschen?", text: `${p.nummer} und sein Projektordner werden gelöscht. Projekte mit Jobs, Material oder Verlauf lassen sich nicht löschen.`, knopf: "Löschen" }))) return;
           if (await aktion(() => api.del(`/api/v1/projekte/${p.id}`))) navigiere("/projekte");
         }} />
+      </>}
       </>}>
       {dialog}
       {meldung && <Meldung {...meldung} onSchliessen={() => setMeldung(null)} />}
@@ -235,7 +240,7 @@ function AufgabenTabelle({ zeilen, darf, onAktion, mitProjekt }) {
   const heute = heuteIso();
   return (
     <Tabelle zeilen={zeilen} leer="Keine Aufgaben." spalten={[
-      { titel: "", breite: 40, wert: (a) => <input type="checkbox" aria-label={`${a.text} erledigt`} checked={a.erledigt} disabled={!darf} onChange={(e) => onAktion(() => api.put(`/api/v1/aufgaben/${a.id}`, { erledigt: e.target.checked }))} /> },
+      { titel: "", breite: 40, wert: (a) => <input type="checkbox" aria-label={`${a.text} erledigt`} checked={a.erledigt} disabled={!darf} onChange={(e) => onAktion(() => api.put(`/api/v1/aufgaben/${a.id}`, { erledigt: e.target.checked, version: a.version }))} /> },
       { titel: "Aufgabe", wert: (a) => <span style={{ textDecoration: a.erledigt ? "line-through" : undefined }}>{a.text}{a.regel_id && <Icon name="RefreshCw" size={12} aria-label="wiederkehrend" style={{ marginLeft: 6, verticalAlign: -1 }} />}</span> },
       ...(mitProjekt ? [{ titel: "Projekt", wert: (a) => (a.projekt_id ? <a href={`#/projekte/${a.projekt_id}?tab=aufgaben`}>{a.nummer} {a.projekt}</a> : <span className="lp-meta">allgemein</span>) }] : []),
       { titel: "Fällig", wert: (a) => (a.faellig ? <span style={{ color: !a.erledigt && a.faellig < heute ? "var(--lp-err)" : undefined, fontWeight: !a.erledigt && a.faellig < heute ? 600 : undefined }}>

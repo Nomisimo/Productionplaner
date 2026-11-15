@@ -107,7 +107,7 @@ function AdressSuche({ onWahl }) {
 export function KundeFormular({ params }) {
   const { api, navigiere } = useLager();
   const neu = !params.id;
-  const f = useFormular(LEER);
+  const f = useFormular(LEER, { live: neu ? null : { typ: "kunde", id: params.id }, laden: () => api.get(`/api/v1/kunden/${params.id}`), zurueck: () => navigiere("/kunden") });
   const [dubletten, setDubletten] = useState(null);
   useEffect(() => { if (!neu) api.get(`/api/v1/kunden/${params.id}`).then((k) => f.setWerte(k)); }, [params.id]);
   const speichern = (trotzdem = false) => f.absenden(async (w) => {
@@ -133,6 +133,7 @@ export function KundeFormular({ params }) {
         <DublettenListe dubletten={dubletten} />
         <div className="lp-zeile" style={{ marginTop: 10 }}><Knopf onClick={() => speichern(true)}>Trotzdem als neuen Kunden anlegen</Knopf></div>
       </Section>}
+      {f.band}
       {f.meldung && <Meldung {...f.meldung} />}
       <div className="lp-zeile"><Knopf art="primaer" icon="Save" onClick={() => speichern(false)}>Speichern</Knopf></div>
     </Seite>
