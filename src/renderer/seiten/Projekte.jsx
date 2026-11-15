@@ -31,7 +31,7 @@ export function ProjektListe({ query }) {
   const setze = (k) => (e) => setF({ ...f, [k]: e.target.value });
   return (
     <Seite titel="Projekte" untertitel="Projekte und Jobs mit Status, Termin und Kunde"
-      aktionen={darfP(nutzer) && <Knopf art="primaer" icon="Plus" onClick={() => navigiere("/projekte/neu")}>Neues Projekt</Knopf>}>
+      aktionen={darfP(nutzer) && <Knopf art="primaer" icon="Plus" tour="projekt-neu" onClick={() => navigiere("/projekte/neu")}>Neues Projekt</Knopf>}>
       <Section>
         <div className="lp-zeile" style={{ marginBottom: 12 }}>
           <div style={{ flex: "1 1 200px" }}><Eingabe placeholder="Suchen: Nummer, Name, Kunde, Ort" aria-label="Suchen" value={f.q} onChange={setze("q")} /></div>
@@ -363,7 +363,7 @@ export function Kalender({ query }) {
         <Knopf icon="ChevronRight" aria-label="Nächster Monat" onClick={() => schiebe(1)} /><Knopf onClick={() => setMonat(heute.slice(0, 7))}>Heute</Knopf></>}>
       {l.fehler && <Meldung level="error" text={l.fehler} />}
       <div className="lp-zeile" style={{ gap: 12 }}>{Object.entries(PROJEKT_STATUS).map(([s, t]) => <span key={s} className="lp-meta"><span className="lp-punkt" style={{ background: STATUS_FARBE[s] }} /> {t}</span>)}</div>
-      <div className="lp-kalender" role="grid" aria-label={`${MONATE[m - 1]} ${y}`}>
+      <div className="lp-kalender" role="grid" data-tour="kalender" aria-label={`${MONATE[m - 1]} ${y}`}>
         {["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map((t) => <div key={t} className="lp-kalender-kopf" role="columnheader">{t}</div>)}
         {wochen.flat().map((t, i) => {
           const projekte = (l.daten?.zeilen || []).filter((p) => p.beginn <= t && (p.ende || p.beginn) >= t);

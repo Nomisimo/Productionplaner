@@ -26,7 +26,7 @@ export function AngebotListe({ query }) {
   const l = useDaten(() => api.get(`/api/v1/angebote?${new URLSearchParams(Object.entries(f).filter(([, v]) => v))}`), [f.q, f.status]);
   useLive(["angebot"], () => l.laden());
   return (
-    <Seite titel="Angebote" untertitel="Alle Angebote mit Status, Projekt und Nettosumme"
+    <Seite titel="Angebote" tour="angebote" untertitel="Alle Angebote mit Status, Projekt und Nettosumme"
       aktionen={darfA(nutzer) && <Knopf art="primaer" icon="Plus" onClick={() => setNeu(true)}>Neues Angebot</Knopf>}>
       <Section>
         <div className="lp-zeile" style={{ marginBottom: 12 }}>

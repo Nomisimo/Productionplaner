@@ -11,6 +11,7 @@ import { normalisiereCode, istGeraetecode, normalisiereProjektcode } from "@lage
 
 import { SuchSeite } from "@lager/ui/uebersicht.jsx";
 import { BenutzerVerwaltung, RollenVerwaltung, EinstellungenSeite, SicherungSeite, SicherheitSeite, SystemSeite } from "@lager/ui/verwaltung-system.jsx";
+import { HilfeSeite } from "@lager/ui/tour/Hilfe.jsx";
 import { VerwaltungStart, ScannerVerwaltung, ArbeitsplatzVerwaltung } from "@lager/ui/verwaltung.jsx";
 
 export const SEITEN = [
@@ -37,6 +38,7 @@ export const SEITEN = [
   { muster: "/kalkulator", Komponente: Kalkulator },
   { muster: "/zeitrechner", Komponente: Zeitrechner },
   { muster: "/suche", Komponente: SuchSeite },
+  { muster: "/hilfe", Komponente: HilfeSeite },
   { muster: "/verwaltung", Komponente: VerwaltungStart },
   { muster: "/verwaltung/benutzer", Komponente: BenutzerVerwaltung },
   { muster: "/verwaltung/rollen", Komponente: RollenVerwaltung },

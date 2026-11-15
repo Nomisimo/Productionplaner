@@ -118,7 +118,7 @@ export function Zeiterfassung({ query }) {
   const darf = darfW(nutzer);
   const liste = projekte.daten?.zeilen || [];
   return (
-    <Seite titel="Planungszeit" untertitel="Erfasste Planungszeit je Projekt, nachbuchen und exportieren"
+    <Seite titel="Planungszeit" tour="planungszeit" untertitel="Erfasste Planungszeit je Projekt, nachbuchen und exportieren"
       aktionen={<>
         <Knopf icon="Download" onClick={() => ladeHerunter(api, `/api/v1/zeit/eintraege.csv?${qs}`, "planungszeit.csv").catch((e) => setMeldung({ level: "error", text: fehlerText(e) }))}>CSV herunterladen</Knopf>
         {darf && <Knopf art="primaer" icon="Plus" onClick={() => setNeu(true)}>Zeit nachbuchen</Knopf>}</>}>
